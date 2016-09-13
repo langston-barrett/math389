@@ -2,6 +2,8 @@
 
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 
+export CFLAGS=-std=gnu11
+
 .PHONY: all
 all:
 	for ps in $(PROBLEM_SETS); do \
