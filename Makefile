@@ -2,10 +2,8 @@
 
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 
-CC?=gcc
-export CC
-CFLAGS=-std=gnu99
-export CFLAGS
+export CC?=gcc
+export CFLAGS=-std=gnu99
 
 .PHONY: all
 all:
