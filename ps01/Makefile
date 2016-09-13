@@ -18,5 +18,6 @@ high-low: high-low.o
 .PHONY: clean
 clean:
 	rm a.out
+	rm -f *.o
 	rm -rf
 	rm -f *.aux *.fdb_latexmk *.fls *.log *.out *.synctex.gz

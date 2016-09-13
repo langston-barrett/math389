@@ -27,6 +27,7 @@ graph:
 .PHONY: clean
 clean:
 	rm a.out
+	rm -f *.o
 	rm -rf auto/
 	rm -f transpose.txt
 	rm -f *.aux *.fdb_latexmk *.fls *.log *.out *.synctex.gz

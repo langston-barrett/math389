@@ -2,7 +2,7 @@
 
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 
-export CFLAGS?=-std=gnu99
+export CFLAGS?=-std=gnu99 # Travis doesn't support C11 yet.
 
 .PHONY: all
 all:
