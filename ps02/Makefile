@@ -3,11 +3,11 @@
 .PHONY: all
 all: tex bit-palindromes decimal-sum mergesort transpose graph clean
 
-tex: ps02.tex
-	echo "TODO"
-
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
+
+tex: ps02.tex
+	echo "TODO"
 
 bit-palindromes: bit-palindromes.o
 	$(CC) -lm bit-palindromes.o
