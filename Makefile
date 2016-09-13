@@ -7,5 +7,4 @@ export CFLAGS
 all:
 	for ps in ps01 ps02; do \
 		$(MAKE) -C $$ps || break; \
-		cd -; \
 	done
