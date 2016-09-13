@@ -3,7 +3,7 @@
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 
 CC?=gcc
-export GCC
+export CC
 CFLAGS=-std=gnu99
 export CFLAGS
 
