@@ -1,5 +1,8 @@
 .DEFAULT_GOAL := all
 
+CFLAGS=-std=gnu99
+export CFLAGS
+
 .PHONY: all
 all: tex bit-palindromes decimal-sum mergesort transpose clean
 
