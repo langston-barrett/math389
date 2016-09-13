@@ -1,12 +1,11 @@
 .DEFAULT_GOAL := all
 
-CFLAGS=-std=c11
+CFLAGS=-std=gnu11
 export CFLAGS
 
 .PHONY: all
 all:
 	for ps in ps01 ps02; do \
-		cd $$ps; \
-		$(MAKE); \
+		$(MAKE) -C $$ps; \
 		cd -; \
 	done
