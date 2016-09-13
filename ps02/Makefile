@@ -1,8 +1,5 @@
 .DEFAULT_GOAL := all
 
-CFLAGS=-std=gnu99
-export CFLAGS
-
 .PHONY: all
 all: tex bit-palindromes decimal-sum mergesort transpose clean
 
@@ -10,16 +7,16 @@ tex: ps02.tex
 	echo "TODO"
 
 bit-palindromes: bit-palindromes.c
-	gcc bit-palindromes.c
+	$(CC) bit-palindromes.c
 
 decimal-sum: decimal-sum.c
-	gcc decimal-sum.c
+	$(CC) decimal-sum.c
 
 mergesort: mergesort.c
-	gcc mergesort.c
+	$(CC) mergesort.c
 
 transpose: transpose.c
-	gcc transpose.c
+	$(CC) transpose.c
 
 .PHONY: clean
 clean:
