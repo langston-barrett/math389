@@ -10,5 +10,5 @@ export CFLAGS
 .PHONY: all
 all:
 	for ps in $(PROBLEM_SETS); do \
-		$(MAKE) -C $$ps || exit 1; \
+		$(MAKE) -e -C $$ps || exit 1; \
 	done
