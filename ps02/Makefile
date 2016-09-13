@@ -29,6 +29,6 @@ graph:
 .PHONY: clean
 clean:
 	rm a.out
-	rm transpose.txt
-	rm -r auto/ &> /dev/null || true
-	rm *.aux *.fdb_latexmk *.fls *.log *.out *.synctex.gz &> /dev/null || true
+	rm -rf auto/
+	rm -f transpose.txt
+	rm -f *.aux *.fdb_latexmk *.fls *.log *.out *.synctex.gz
