@@ -3,25 +3,32 @@
 export CFLAGS=-std=gnu99
 
 .PHONY: all
-all: tex bit-palindromes decimal-sum mergesort transpose clean
+all: tex bit-palindromes decimal-sum mergesort transpose graph clean
 
 tex: ps02.tex
 	echo "TODO"
 
-bit-palindromes: bit-palindromes.c
-	$(CC) bit-palindromes.c
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-decimal-sum: decimal-sum.c
-	$(CC) decimal-sum.c
+bit-palindromes: bit-palindromes.o
+	$(CC) -lm bit-palindromes.o
 
-mergesort: mergesort.c
-	$(CC) mergesort.c
+decimal-sum: decimal-sum.o
+	$(CC) -lm decimal-sum.o
 
-transpose: transpose.c
-	$(CC) transpose.c
+mergesort: mergesort.o
+	$(CC) -lm mergesort.o
+
+transpose: transpose.o
+	$(CC) -lm transpose.o
+
+graph:
+	echo "TODO"
 
 .PHONY: clean
 clean:
 	rm a.out
+	rm transpose.txt
 	rm -r auto/ &> /dev/null || true
 	rm *.aux *.fdb_latexmk *.fls *.log *.out *.synctex.gz &> /dev/null || true
