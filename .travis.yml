@@ -1,2 +1,5 @@
-language: c
-script: make
+language: nix
+install: nix-env -i make
+script:
+  - make --version
+  - make
