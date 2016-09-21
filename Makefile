@@ -1,7 +1,6 @@
 .DEFAULT_GOAL := all
 
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
-
 export CFLAGS?=-std=gnu99 # Travis doesn't support C11 yet.
 
 # $$$$ is necessary in a macro instead of $$
@@ -12,11 +11,7 @@ $(1):;
 	done
 endef
 
-.PHONY: all
 $(call forall,all)
-.PHONY: build
 $(call forall,build)
-.PHONY: test
 $(call forall,test)
-.PHONY: clean
 $(call forall,clean)

@@ -1,6 +1,2 @@
 language: nix
-install:
-  - nix-env -u gnumake
-  - make --version
-script:
-  - make
+script: nix-shell -A math389 --command make

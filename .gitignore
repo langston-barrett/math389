@@ -9,6 +9,8 @@
 # example files from jim
 **/examples/*
 
+ps03/turtle-main.c
+
 ########################### C
 
 # Object files
