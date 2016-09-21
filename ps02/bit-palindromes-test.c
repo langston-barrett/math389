@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "bit-palindromes.h"
-#include "minunit.h"
+#include "../minunit.h"
 
 int tests_run = 0;
 

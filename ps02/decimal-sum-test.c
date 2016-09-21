@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "decimal-sum.h"
-#include "minunit.h"
+#include "../minunit.h"
 
 int tests_run = 0;
 

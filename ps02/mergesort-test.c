@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "mergesort.h"
-#include "minunit.h"
+#include "../minunit.h"
 
 int tests_run = 0;
 
