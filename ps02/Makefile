@@ -1,25 +1,24 @@
 .DEFAULT_GOAL := all
 
 .PHONY: all
-all: tex bit-palindromes decimal-sum mergesort transpose graph clean
+all: build test clean
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+.PHONY: build
+build: bit-palindromes decimal-sum mergesort transpose graph clean
 
-tex: ps02.tex
-	echo "TODO"
+.PHONY: test
+test:; exit 0
 
-bit-palindromes: bit-palindromes.o
-	$(CC) -lm bit-palindromes.o
+define build =
+$(1): $(1).o;
+	$(CC) -lm $(1).o $(CFLAGS)
+endef
 
-decimal-sum: decimal-sum.o
-	$(CC) -lm decimal-sum.o
-
-mergesort: mergesort.o
-	$(CC) -lm mergesort.o
-
-transpose: transpose.o
-	$(CC) -lm transpose.o
+# targets
+$(call build,bit-palindromes)
+$(call build,decimal-sum)
+$(call build,mergesort)
+$(call build,transpose)
 
 graph:
 	echo "TODO"

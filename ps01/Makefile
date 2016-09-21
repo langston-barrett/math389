@@ -1,19 +1,22 @@
 .DEFAULT_GOAL := all
 
 .PHONY: all
-all: tex divisors high-low clean
+all: build test clean
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+.PHONY: build
+build: divisors high-low
 
-tex: ps01.tex
-	echo "TODO"
+.PHONY: test
+test:; exit 0
 
-divisors: divisors.o
-	$(CC) -lm divisors.o
+define build =
+$(1): $(1).o;
+	$(CC) -lm $(1).o $(CFLAGS)
+endef
 
-high-low: high-low.o
-	$(CC) -lm high-low.o
+# targets
+$(call build,divisors)
+$(call build,high-low)
 
 .PHONY: clean
 clean:
