@@ -12,7 +12,11 @@ $(1):;
 	done
 endef
 
+.PHONY: all
 $(call forall,all)
+.PHONY: build
 $(call forall,build)
+.PHONY: test
 $(call forall,test)
+.PHONY: clean
 $(call forall,clean)
