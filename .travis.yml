@@ -1,5 +1,6 @@
 language: nix
-install: nix-env -i make
-script:
+install:
+  - nix-env -u gnumake
   - make --version
+script:
   - make
