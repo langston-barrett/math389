@@ -60,8 +60,3 @@ char *as_string(turtle *t) {
 }
 
 void replenish(turtle *t) { t->ink = t->ink + 10; }
-
-int main(void) {
-  printf("not yet implemented.\n");
-  return 1;
-}
