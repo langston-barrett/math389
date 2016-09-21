@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
-export CFLAGS?=-std=gnu99 # Travis doesn't support C11 yet.
+export CFLAGS?=-std=gnu11
 
 # $$$$ is necessary in a macro instead of $$
 define forall =
