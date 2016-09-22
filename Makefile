@@ -4,10 +4,9 @@ PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 
 # Detect nix-shell, use it if present
 NIX_SHELL := $(shell command -v nix-shell 2> /dev/null)
+SUBMAKE := $(MAKE) -e -C $$$$ps $(1) || exit 1
 ifdef NIX_SHELL
-CMD:=nix-shell -A math389 --command "$(MAKE) -e -C $$$$ps $(1) || exit 1"
-else
-CMD:=$(MAKE) -e -C $$$$ps $(1) || exit 1
+SUBMAKE := nix-shell -A math389 --command "$(SUBMAKE)"
 endif
 
 export CFLAGS?=-std=gnu11
@@ -18,7 +17,7 @@ export CFLAGS?=-std=gnu11
 # $$$$ is necessary in a macro instead of $$
 define forall =
 $(1):;
-	for ps in $(PROBLEM_SETS); do $(CMD); done
+	for ps in $(PROBLEM_SETS); do $(SUBMAKE); done
 endef
 
 $(call forall,all)
