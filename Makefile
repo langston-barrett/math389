@@ -3,6 +3,9 @@
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 export CFLAGS?=-std=gnu11
 
+# This function calls `make` in each subdirectory of the form ps* using the
+# provided command, and passing down variables from this instance.
+#
 # $$$$ is necessary in a macro instead of $$
 define forall =
 $(1):;

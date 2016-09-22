@@ -1,4 +1,4 @@
-# This file pins compile dependencies using nix
+# See README.md for explanation.
 let
   pkgs = import <nixpkgs> {};
   stdenv = pkgs.stdenv;
