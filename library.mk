@@ -5,11 +5,8 @@
 .PHONY: all
 all: build test clean
 
-# This rule constructs a fake main file when it's not present
-%-main.o: $(DEPS)
-	[ ! -f $(basename $@).c ]; echo "int main(void){return 1;}" > $(basename $@).c
-	$(CC) $(CFLAGS) -o $@ -c $(basename $@).c
-	$(CC) $(CFLAGS) -lm $@
+# %.o: %.c
+# 	gcc -c -o $@ $<
 
 # Generate header file for functions
 %.gen.h: %.c ../makeheaders.sh $(DEPS)
