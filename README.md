@@ -4,11 +4,9 @@
 
 ### Building
 
-Building this project requires recent versions of `gcc` (≥5) and `make` (≥4).
-If you have [Nix](https://nixos.org/nix/) installed, you can just:
-```
-nix-shell -A math389 --command make
-```
+Building this project requires recent versions of `gcc` (≥5) and `make` (≥4). If
+you have [Nix](https://nixos.org/nix/) installed, the Makefile will detect and
+use `nix-shell`.
 
 ### File Structure
 
