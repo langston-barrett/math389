@@ -13,8 +13,8 @@
 # rsi: arg 2
 # Volatile registers: r9, r10, r11
 
-  .globl  dc
-  .text
+.globl  dc
+.text
 dc:                     # dc : Int -> IO Int
   pushq   %rbp          # push base pointer onto the stack
   movq    %rsp, %rbp    # push stack pointer up to base pointer
@@ -119,8 +119,9 @@ call_mod: # jump
   callq   mod          # result = mod
   movq    %rax, %rdi   # arg 1 = result
   callq   push         # push result to top of the stack
-  jmp     loop         # "return"
+  jmp     loop         # 'return'
 
+.globl  mod
 mod: # function
   cmpq    $0, %rdi     # if (n < 0)
   jge     mod_positive # then dispatch to positive version
@@ -129,7 +130,7 @@ mod: # function
 # mod two numbers where the dividend > 0
 mod_positive:
   cmpq    %rsi, %rdi   # if (dividend < divisor) then return dividend
-  jl      mod_ret
+  jl      mod_ret_positive
   subq    %rsi, %rdi   # else dividend - divisor
   jmp     mod_positive # loop
 
@@ -138,20 +139,26 @@ mod_negative:
   movq    %rdi, %rax   # copy the divident
   negq    %rax         # negate it
   cmpq    %rsi, %rax   # if (-dividend < divisor) then return dividend
-  jl      mod_ret
+  jl      mod_ret_negative
   addq    %rsi, %rdi   # else dividend + divisor
   jmp     mod_negative # loop
 
-mod_ret:
+mod_ret_positive:
   movq    %rdi, %rax   # return dividend
+  retq
+mod_ret_negative:
+  movq    %rdi, %rax   # return -dividend
+  negq    %rax
   retq
 
 call_divide: # jump
   jmp     loop
 
+.globl  divide
 divide: # jump
   jmp     loop
 
+.globl  power
 power: # jump
   jmp     loop
 
