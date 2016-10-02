@@ -11,6 +11,7 @@ build: main.o dc.s lib.o
 	$(CC) -o dc -lm main.o dc.o lib.o $(CFLAGS)
 
 test: dc-test.o dc.s lib.o
+	clear
 	$(CC) -c dc.s $(CFLAGS)
 	$(CC) -o test -lm dc-test.o dc.o lib.o $(CFLAGS)
 	./test

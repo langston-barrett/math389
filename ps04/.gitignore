@@ -1,4 +1,6 @@
+# Binaries
 dc
+test
 # Not production-ready Haskell test files
 *.hs
 *.hi

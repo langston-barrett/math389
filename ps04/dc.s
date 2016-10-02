@@ -84,7 +84,6 @@ pop2:  # function
 
 ############################### Simple Arithmetic ###############################
 
-
 add: # jump
   callq   pop2       # m, n = pop(), pop()
   addq    %rdx, %rax # n = m + n
@@ -114,9 +113,9 @@ multiply: # jump
 
 call_mod: # jump
   callq   pop2         # m, n = pop(), pop()
-  movq    %rax, %rdi   # arg1 = m
-  movq    %rdx, %rsi   # arg2 = n
-  callq   mod          # result = mod
+  movq    %rax, %rsi   # arg1 = n
+  movq    %rdx, %rdi   # arg2 = m
+  callq   mod          # result = mod(arg1, arg2)
   movq    %rax, %rdi   # arg 1 = result
   callq   push         # push result to top of the stack
   jmp     loop         # 'return'
@@ -128,35 +127,61 @@ mod: # function
   jmp     mod_negative # else dispatch to negative version
 
 # mod two numbers where the dividend > 0
-mod_positive:
+mod_positive: # internal jump
   cmpq    %rsi, %rdi   # if (dividend < divisor) then return dividend
   jl      mod_ret_positive
   subq    %rsi, %rdi   # else dividend - divisor
   jmp     mod_positive # loop
 
 # mod two numbers where the dividend < 0
-mod_negative:
-  movq    %rdi, %rax   # copy the divident
+mod_negative: # internal jump
+  movq    %rdi, %rax   # copy the dividend
   negq    %rax         # negate it
   cmpq    %rsi, %rax   # if (-dividend < divisor) then return dividend
   jl      mod_ret_negative
   addq    %rsi, %rdi   # else dividend + divisor
   jmp     mod_negative # loop
 
-mod_ret_positive:
+mod_ret_positive: # internal jump
   movq    %rdi, %rax   # return dividend
   retq
-mod_ret_negative:
+mod_ret_negative: # internal jump
   movq    %rdi, %rax   # return -dividend
   negq    %rax
   retq
 
 call_divide: # jump
-  jmp     loop
+  callq   pop2         # m, n = pop(), pop()
+  movq    %rax, %rsi   # arg1 = n
+  movq    %rdx, %rdi   # arg2 = m
+  callq   divide       # result = divide(arg1, arg2)
+  movq    %rax, %rdi   # arg 1 = result
+  callq   push         # push result to top of the stack
+  jmp     loop         # 'return'
 
 .globl  divide
 divide: # jump
-  jmp     loop
+  movq    $0, %rax     # zero out the counter
+  cmpq    $0, %rdi     # if (m < 0)
+  jge     div_positive # then dispatch to positive version
+  jmp     div_negative # else dispatch to negative version
+
+div_negative: # internal jump
+  movq    %rdi, %rdx   # tmp = m
+  negq    %rdx         # tmp = -tmp
+  cmpq    %rsi, %rdi   # if (tmp < n)
+  jmp     div_ret      # then return counter
+  addq    %rsi, %rdi   # else m - n
+  loop    div_negative
+
+div_positive: # internal jump
+  cmpq    %rsi, %rdi   # if (m < n)
+  jmp     div_ret      # then return counter
+  subq    %rsi, %rdi   # else m - n
+  loop    div_positive
+
+div_ret: # internal jump
+  retq
 
 .globl  power
 power: # jump
