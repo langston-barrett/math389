@@ -59,7 +59,7 @@ void merge_sort(int *arr, int n) {
 
   for (int bin_size = 1; bin_size <= n; bin_size = bin_size * 2) {
     merge(arr, n, dest, bin_size);
-    print_array(dest, n);
+    // print_array(dest, n);
   }
   for (int i = 0; i < n; i++) {
     arr[i] = dest[i];
@@ -74,27 +74,4 @@ int *fake_data(int n) {
   }
 
   return data;
-}
-
-int main(int argc, char **argv) {
-  int n;
-  int* data;
-
-  if (argc <= 1) {
-    fprintf(stderr,"usage: %s <size of data>\n", argv[0]);
-    return -1;
-  }
-  n = atoi(argv[1]);
-
-  data = fake_data(n);
-
-  printf("unsorted: ");
-  print_array(data, n);
-
-  merge_sort(data,n);
-
-  printf("sorted:   ");
-  print_array(data, n);
-
-  return 0;
 }

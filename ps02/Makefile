@@ -4,10 +4,14 @@ include ../library.mk
 build: bit-palindromes decimal-sum mergesort transpose
 
 .PHONY: test
-test:; exit 0
+test: bit-palindromes-test decimal-sum-test mergesort-test
 
 # targets
-$(call build,bit-palindromes)
-$(call build,decimal-sum)
-$(call build,mergesort)
+$(call build-main,bit-palindromes)
+$(call build-main,decimal-sum)
+$(call build-main,mergesort)
 $(call build,transpose)
+
+$(call test,bit-palindromes)
+$(call test,decimal-sum)
+$(call test,mergesort)
