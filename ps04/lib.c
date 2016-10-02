@@ -16,17 +16,3 @@ char input_char() {
 void output_int64(int64_t v) {
   printf("%li\n", v);
 }
-
-void invalid_char(int64_t code) {
-  printf("Invalid character '%c'. Accepted: [0-9]pdx+-*/%%^.\n", (int) code);
-}
-
-void quit(int64_t code) {
-  switch ((int) code) {
-  case 0:
-    printf("Exited normally.\n");
-    break;
-  default:
-    printf("Unknown error code: %li\n", code);
-  }
-}
