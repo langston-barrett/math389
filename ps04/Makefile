@@ -4,7 +4,7 @@
 CFLAGS ?= -g
 
 .PHONY: all build test clean
-all: clean build
+all: build test clean
 
 build: main.o dc.s lib.o
 	$(CC) -c dc.s $(CFLAGS)
@@ -15,6 +15,13 @@ test: dc-test.o dc.s lib.o
 	$(CC) -c dc.s $(CFLAGS)
 	$(CC) -o test -lm dc-test.o dc.o lib.o $(CFLAGS)
 	./test
+
+asmfmt:
+	mkdir gopath
+	export GOPATH=$PWD/gopath
+	go get -u github.com/klauspost/asmfmt/cmd/asmfmt
+	mv gopath/bin/asmfmt .
+	rm -rf gopath
 
 clean:
 	rm -f *.o

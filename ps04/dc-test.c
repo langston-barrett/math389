@@ -36,7 +36,7 @@ static char *test_divide() {
   // preliminary hand-made tests
   assert_int64_eq(3,  divide(10, 3));
   assert_int64_eq(2,  divide(10, 4));
-  assert_int64_eq(2,  divide(-11, 5));
+  assert_int64_eq(-2,  divide(-11, 5));
   // automated tests - does it behave like C's div?
   for (int64_t i = -1000; i < 1000; i++) {
     for (int64_t j = 1; j < 10; j++) {
@@ -50,7 +50,7 @@ static char *test_divide() {
 
 static char *all_tests() {
   run_test(test_mod);
-  //run_test(test_divide);
+  run_test(test_divide);
   return 0;
 }
 

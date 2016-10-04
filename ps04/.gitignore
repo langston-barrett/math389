@@ -1,5 +1,6 @@
 # Binaries
 dc
+asmfmt
 test
 # Not production-ready Haskell test files
 *.hs
