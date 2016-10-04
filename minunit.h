@@ -26,7 +26,8 @@
       tests_failed++;                                                          \
       snprintf(message, 1024,                                                  \
                "%s failed:\n\t%s:%d: expected %s == %li, got %li", __func__,   \
-               __FILE__, __LINE__, #actual, expected, actual);                 \
+               __FILE__, __LINE__, #actual, (int64_t)expected,                 \
+               (int64_t)actual);                                               \
       return message;                                                          \
     }                                                                          \
   } while (0)
