@@ -32,6 +32,19 @@
     }                                                                          \
   } while (0)
 
+// compare two int64_ts
+#define assert_int64_lt(less, more)                                            \
+  do {                                                                         \
+    tests_run++;                                                               \
+    if (less >= more) {                                                        \
+      tests_failed++;                                                          \
+      snprintf(message, 1024,                                                  \
+               "%s failed:\n\t%s:%d: expected %s < %li, got %li", __func__,    \
+               __FILE__, __LINE__, #less, (int64_t)more, (int64_t)less);       \
+      return message;                                                          \
+    }                                                                          \
+  } while (0)
+
 // TODO: assert_str_eq
 #define run_test(test)                                                         \
   do {                                                                         \
