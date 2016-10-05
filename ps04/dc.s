@@ -1,4 +1,6 @@
 # -*- mode: assembler -*-
+# run `./asmfmt -w ./dc.s` to reformat this file.
+#
 # ASCII codes:
 # 0: 48, 1: 49, 2: 50, 3: 51, 4: 52, 5: 53, 6: 54, 7: 55, 8: 56, 9: 57
 # p: 112, d: 100, x: 120, *: 42, +: 43, -: 45, /: 47, %: 37, ^: 94
@@ -19,10 +21,7 @@
 dc:
 	pushq %rbp         # push base pointer onto the stack
 	movq  %rsp, %rbp   # push stack pointer up to base pointer
-	movq  %rdi, %rcx   # save fake stack pointer to rcx jmp loop
-
-# The input loop. Gather characters from stdin.
-# loop : jump
+	movq  %rdi, %rcx   # save fake stack pointer to rcx
 loop:
 	pushq %rcx         # save fake stack pointer to stack
 	callq input_char   # rax = input()
@@ -31,6 +30,7 @@ loop:
 	callq dispatch     # dispatch(arg1)
 	jmp   loop
 
+
 # Dispatches to other functions depending on the input.
 # dispatch : Char -> IO ()
 dispatch:
@@ -38,6 +38,8 @@ dispatch:
 	je    return0      #   we're done
 	cmpq  $112, %rdi   # case p:
 	je    print_top    #   print the top of the stack
+  cmpq  $100, %rdi   # case d:
+	je    call_decimal_construction
 	cmpq  $37, %rdi    # case %:
 	je    call_mod     #   mod
 	cmpq  $42, %rdi    # case *:
@@ -57,6 +59,13 @@ dispatch:
 	subq  $48, %rdi    # subtract char '0' to get integer value
 	callq push         #
 	retq
+
+# Takes a pointer to a stack and the stack length, returns a
+# new pointer and new stack length. The pure version of dc,
+# for testing purposes.
+.globl real_dc
+real_dc:
+  retq
 
 #################################### Stack ####################################
 
@@ -187,26 +196,23 @@ divide:
 # div_* : internal jump
 div_positive:
 	cmpq  %rsi, %rdi   # if (dividend < divisor)
-	jl    div_ret      # return counter
+	jl    retq         # return counter
 	subq  %rsi, %rdi   # else dividend = dividend - divisor
 	callq div_positive # recurse
 	incq  %rax         # counter++
-	jmp   div_ret      # return counter
+	jmp   retq         # return counter
 
 div_negative:
 	movq  %rdi, %rdx   # dividend' = dividend
 	negq  %rdx         # dividend' = -dividend
 	cmpq  %rsi, %rdx   # if (dividend' < divisor)
-	jl    div_ret      # return counter
+	jl    retq         # return counter
 	addq  %rsi, %rdi   # else dividend = dividend + divisor
 	callq div_negative # recurse
 	decq  %rax         # counter--
-	jmp   div_ret      # return counter
+	jmp   retq         # return counter
 
-div_ret:
-	retq
-
-	.globl power
+.globl power
 
 power:
 	jmp loop
@@ -214,12 +220,94 @@ power:
 ############################# Decimal Construction #############################
 
 # mutates rcx, the stack pointer
-.globl decimal_construction
+# call_decimal_construction : jump
+call_decimal_construction:
+	movq  %rcx, %rdi   # decimal_construction(stack_pointer)
+	callq decimal_construction
+	pushq %rax         # save return value
+	movq  %rcx, %rdi   # stack_pointer = decimal_construction_pop(stack_pointer)
+	callq decimal_construction_pop
+	movq  %rax, %rcx   #
+	jmp   loop
 
+# rcx: custom stack stack pointer - points to top item in stack
+# rax: return 1
+# rdx: return 2
+# rdi: arg 1
+# rsi: arg 2
+# Volatile registers : r8, r9, r10, r11
+
+# decimal_construction : Ptr Int -> IO ()
+.globl decimal_construction
 decimal_construction:
-	jmp loop
+  movq  %rdi, %r9    # stack_pointer = input_stack_pointer
+	movq  (%r9), %r8	 # n = pop(stack_pointer)
+  addq  $8, %r9
+  decq  %r8          # n-- (to avoid off-by 1 error)
+  movq  $0, %r11     # to_return = 0
+decimal_construction_helper:
+	cmpq  $0, %r8      # if n <= 0
+	jl    return_r11   # then return to_return
+	movq  (%r9), %rdi  #
+  addq  $8, %r9      # arg1 = pop(tmp_stack)
+	movq  %r8, %rsi    # to_add = decimal_shift(arg1, n)
+	callq decimal_shift
+	addq  %rax, %r11   # to_return += to_add
+	decq  %r8          # n--
+	loop  decimal_construction_helper
+
+# return_r11 : jump
+return_r11:
+  movq  %r11, %rax
+  retq
+
+# Multiply %rdi by 10^%rsi
+# decimal_shift : Int -> Int -> Int
+.globl decimal_shift
+decimal_shift:
+  cmpq $0, %rsi     # if n <= 0
+  jle  retq_rdi     # return x
+	movq $0, %rax     # to_return = 0
+  jmp  decimal_shift_loop
+
+# x * 10 = (x << 3) + (x << 1)
+decimal_shift_loop:
+                    # do {
+  movq %rdi, %rdx   # tmp = x
+	salq $3, %rdx     # tmp = tmp << 3
+  addq %rdx, %rax   # to_return += tmp
+
+  movq %rdi, %rdx   # tmp = x
+	salq $1, %rdx     # tmp = tmp << 1
+	addq %rdx, %rax   # to_return += tmp
+
+	decq %rsi         # n--
+  cmpq $0, %rsi     # if n <= 0
+  jle  retq         # then return to_return
+
+  movq %rax, %rdi
+  movq $0, %rax     #
+	jmp  decimal_shift_loop # decimal_shift_loop(to_return, n)
+
+# retq_rdi : jump
+retq_rdi:
+  movq %rdi, %rax
+  retq
+
+# Pop the first n values off the stack, where n is the first value on the stack.
+# %rdi is the stack pointer
+# returns new stack pointer
+.globl decimal_construction_pop
+
+decimal_construction_pop:
+	retq
 
 ################################## Returning ##################################
+
+# return from a function conditionally
+# retq : jump
+retq:
+	retq
 
 # Print the top of the stack, saving the important registers
 # print_top : jump
