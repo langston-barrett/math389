@@ -8,6 +8,8 @@ static uint64_t tests_run = 0;
 static uint64_t tests_failed = 0;
 static char message[1024];
 
+extern int64_t mul(int64_t dividend, int64_t divisor);
+extern int64_t power(int64_t dividend, int64_t divisor);
 extern int64_t mod(int64_t dividend, int64_t divisor);
 extern int64_t divide(int64_t dividend, int64_t divisor);
 extern int64_t decimal_shift(int64_t x, int64_t n);
@@ -52,7 +54,7 @@ static char *test_divide() {
 }
 
 // using the repeated squares method
-int64_t ipow(int64_t base, int64_t exp) {
+int64_t ipower(int64_t base, int64_t exp) {
   int64_t result = 1;
   while (exp) {
     if (exp & 1) {
@@ -76,7 +78,7 @@ static char *test_decimal_shift_identity() {
 }
 
 // the results from this should match the ones from the assembly
-static int64_t c_decimal_shift(int64_t x, int64_t y) { return x * ipow(10, y); }
+static int64_t c_decimal_shift(int64_t x, int64_t y) { return x * ipower(10, y); }
 
 static char *test_decimal_shift() {
   for (int64_t i = 0; i < 10; i++) {
@@ -111,12 +113,34 @@ static char *test_decimal_construction() {
   return 0;
 }
 
+static char *test_mul() {
+  for (int64_t i = 0; i < 1000; i++) {
+    for (int64_t j = 0; j < 1000; j++) {
+      assert_int64_eq(i * j, mul(i, j));
+    }
+  }
+  return 0;
+}
+
+static char *test_power() {
+  for (int64_t i = 0; i < 1000; i++) {
+    for (int64_t j = 0; j < 1000; j++) {
+      printf("i: %li\n", i);
+      printf("j: %li\n", j);
+      assert_int64_eq(ipower(i, j), power(i, j));
+    }
+  }
+  return 0;
+}
+
 static char *all_tests() {
   run_test(test_mod);
   run_test(test_divide);
   run_test(test_decimal_shift_identity);
   run_test(test_decimal_shift);
   run_test(test_decimal_construction);
+  run_test(test_mul);
+  run_test(test_power);
   return 0;
 }
 

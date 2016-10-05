@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-int64_t mul(int64_t n, int64_t m) {
-  return n*m;
-}
-
 int64_t input_char() {
   char c;
   if (!scanf(" %c",&c)) { // skip initial whitespace

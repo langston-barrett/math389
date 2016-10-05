@@ -22,6 +22,7 @@ dc:
 	pushq %rbp         # push base pointer onto the stack
 	movq  %rsp, %rbp   # push stack pointer up to base pointer
 	movq  %rdi, %rcx   # save fake stack pointer to rcx
+
 loop:
 	pushq %rcx         # save fake stack pointer to stack
 	callq input_char   # rax = input()
@@ -30,7 +31,6 @@ loop:
 	callq dispatch     # dispatch(arg1)
 	jmp   loop
 
-
 # Dispatches to other functions depending on the input.
 # dispatch : Char -> IO ()
 dispatch:
@@ -38,7 +38,7 @@ dispatch:
 	je    return0      #   we're done
 	cmpq  $112, %rdi   # case p:
 	je    print_top    #   print the top of the stack
-  cmpq  $100, %rdi   # case d:
+	cmpq  $100, %rdi   # case d:
 	je    call_decimal_construction
 	cmpq  $37, %rdi    # case %:
 	je    call_mod     #   mod
@@ -61,11 +61,12 @@ dispatch:
 	retq
 
 # Takes a pointer to a stack and the stack length, returns a
-# new pointer and new stack length. The pure version of dc,
+# new pointer and new stack length. The pure version of dc
 # for testing purposes.
 .globl real_dc
+
 real_dc:
-  retq
+	retq
 
 #################################### Stack ####################################
 
@@ -212,10 +213,95 @@ div_negative:
 	decq  %rax         # counter--
 	jmp   retq         # return counter
 
-.globl power
+.globl mul
+mul:
+	pushq %rbp         # save the caller's stack frame
+	movq  %rsp, %rbp   # set up our own
+	subq  $0, %rsp     # reserve 0 bytes of frame space
 
+	movq $0, %rax      # sum = 0
+
+mul_loop:
+	cmpq $0, %rdi      # are we done?
+	jle  mul_loop_return
+
+	pushq %rdi         # store rdi for later
+	andq  $1, %rdi     # get last digit of rdi
+
+	cmpq $1, %rdi      # if the last digit was one, add it to the sum
+	je   do_addition
+	cmpq $0, %rdi      # if the last digit was zero, don't add it
+	je   dont_do_addition
+
+do_addition:
+	addq %rsi, %rax    # sum += rsi
+
+dont_do_addition:
+	salq %rsi          # move rsi over one place
+	popq %rdi          # get rdi back, take off the last digit
+	sarq %rdi
+	jmp  mul_loop
+
+mul_loop_return:
+	movq %rbp, %rsp   # restore the caller's stack frame
+	popq %rbp
+	retq
+
+.globl power
+# returns rdi^rsi
+# failing when rdi % 2 == 0
 power:
-	jmp loop
+	pushq %rbp         # save the caller's stack frame
+	movq  %rsp, %rbp   # set up our own
+	subq  $0, %rsp     # reserve 0 bytes of frame space
+
+	cmpq $0, %rsi      # x^0 == 1
+	je   power_return_1
+	cmpq $1, %rdi      # 1^x == 1
+	je   power_return_1
+	cmpq $1, %rsi      # x^1 == x
+	je   power_return_rdi
+
+	movq %rdi, %rax    # figure out if n (rdi) is odd or even
+	andq $1, %rax
+	cmpq $1, %rax
+	je   rdi_is_odd
+	cmpq $1, %rax
+	jne  rdi_is_even
+
+# in this case, compute pow(n*n, m // 2)
+rdi_is_even:
+	pushq %rsi         # save m
+	movq  %rdi, %rsi   # n *= n
+	callq mul
+	movq  %rax, %rdi
+	popq  %rsi         # restore m
+
+	sarq  %rsi         # m /= 2
+	callq power        # recurse
+	jmp   power_return
+
+# in this case, compute n*pow(n, m-1)
+rdi_is_odd:
+	pushq %rdi         # save n
+	dec   %rsi         # m -= 1
+	callq power        # rax = pow(n, m-1)
+	popq  %rdi         # restore n
+	movq  %rax, %rsi   # rax *= n
+	callq mul
+	jmp   power_return
+
+power_return_rdi:
+	movq %rdi, %rax
+	jmp  power_return
+
+power_return_1:
+	movq $1, %rax
+
+power_return:
+	movq %rbp, %rsp    # restore the caller's stack frame
+	popq %rbp
+	retq
 
 ############################# Decimal Construction #############################
 
@@ -225,9 +311,8 @@ call_decimal_construction:
 	movq  %rcx, %rdi   # decimal_construction(stack_pointer)
 	callq decimal_construction
 	pushq %rax         # save return value
-	movq  %rcx, %rdi   # stack_pointer = decimal_construction_pop(stack_pointer)
 	callq decimal_construction_pop
-	movq  %rax, %rcx   #
+	popq  %rax
 	jmp   loop
 
 # rcx: custom stack stack pointer - points to top item in stack
@@ -239,60 +324,63 @@ call_decimal_construction:
 
 # decimal_construction : Ptr Int -> IO ()
 .globl decimal_construction
+
 decimal_construction:
-  movq  %rdi, %r9    # stack_pointer = input_stack_pointer
-	movq  (%r9), %r8	 # n = pop(stack_pointer)
-  addq  $8, %r9
-  decq  %r8          # n-- (to avoid off-by 1 error)
-  movq  $0, %r11     # to_return = 0
+	movq %rdi, %r9    # stack_pointer = input_stack_pointer
+	movq (%r9), %r8  # n = pop(stack_pointer)
+	addq $8, %r9
+	decq %r8          # n-- (to avoid off-by 1 error)
+	movq $0, %r11     # to_return = 0
+
 decimal_construction_helper:
 	cmpq  $0, %r8      # if n <= 0
-	jl    return_r11   # then return to_return
+	jl    retq_r11     # then return to_return
 	movq  (%r9), %rdi  #
-  addq  $8, %r9      # arg1 = pop(tmp_stack)
+	addq  $8, %r9      # arg1 = pop(tmp_stack)
 	movq  %r8, %rsi    # to_add = decimal_shift(arg1, n)
 	callq decimal_shift
 	addq  %rax, %r11   # to_return += to_add
 	decq  %r8          # n--
 	loop  decimal_construction_helper
 
-# return_r11 : jump
-return_r11:
-  movq  %r11, %rax
-  retq
+# retq_r11 : jump
+retq_r11:
+	movq %r11, %rax
+	retq
 
 # Multiply %rdi by 10^%rsi
 # decimal_shift : Int -> Int -> Int
 .globl decimal_shift
+
 decimal_shift:
-  cmpq $0, %rsi     # if n <= 0
-  jle  retq_rdi     # return x
-	movq $0, %rax     # to_return = 0
-  jmp  decimal_shift_loop
+	cmpq $0, %rsi      # if n <= 0
+	jle  retq_rdi      # return x
+	movq $0, %rax      # to_return = 0
+	jmp  decimal_shift_loop
 
 # x * 10 = (x << 3) + (x << 1)
 decimal_shift_loop:
-                    # do {
-  movq %rdi, %rdx   # tmp = x
-	salq $3, %rdx     # tmp = tmp << 3
-  addq %rdx, %rax   # to_return += tmp
+# do {
+movq %rdi, %rdx    # tmp = x
+salq $3, %rdx      # tmp = tmp << 3
+addq %rdx, %rax    # to_return += tmp
 
-  movq %rdi, %rdx   # tmp = x
-	salq $1, %rdx     # tmp = tmp << 1
-	addq %rdx, %rax   # to_return += tmp
+movq %rdi, %rdx    # tmp = x
+salq $1, %rdx      # tmp = tmp << 1
+addq %rdx, %rax    # to_return += tmp
 
-	decq %rsi         # n--
-  cmpq $0, %rsi     # if n <= 0
-  jle  retq         # then return to_return
+decq %rsi          # n--
+cmpq $0, %rsi      # if n <= 0
+jle  retq          # then return to_return
 
-  movq %rax, %rdi
-  movq $0, %rax     #
+	movq %rax, %rdi
+	movq $0, %rax
 	jmp  decimal_shift_loop # decimal_shift_loop(to_return, n)
 
 # retq_rdi : jump
 retq_rdi:
-  movq %rdi, %rax
-  retq
+	movq %rdi, %rax
+	retq
 
 # Pop the first n values off the stack, where n is the first value on the stack.
 # %rdi is the stack pointer
@@ -300,7 +388,17 @@ retq_rdi:
 .globl decimal_construction_pop
 
 decimal_construction_pop:
-	retq
+	callq pop
+	movq  %rax, %r8   # count = pop()
+	movq  %rax, %rdi   # count = pop()
+	callq output_int64
+
+decimal_construction_pop_loop:
+	cmpq  $0, %r8
+	jle   retq
+	callq pop
+	decq  %r8
+	jmp   decimal_construction_pop_loop
 
 ################################## Returning ##################################
 
