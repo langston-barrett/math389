@@ -51,7 +51,7 @@ dispatch:
 	cmpq  $47, %rdi    # case /:
 	je    call_divide  #   divide
 	cmpq  $94, %rdi    # case ^:
-	je    power        #   power
+	je    call_power   #   power
 	cmpq  $48, %rdi    # case input < '0':
 	jl    return1      #   invalid input!
 	cmpq  $57, %rdi    # case input > '9':
@@ -213,6 +213,8 @@ div_negative:
 	decq  %rax         # counter--
 	jmp   retq         # return counter
 
+############################### Multiplication ###############################
+
 .globl mul
 mul:
 	pushq %rbp         # save the caller's stack frame
@@ -246,6 +248,15 @@ mul_loop_return:
 	movq %rbp, %rsp   # restore the caller's stack frame
 	popq %rbp
 	retq
+
+call_power:
+	callq pop2         # m, n = pop(), pop()
+	movq  %rdx, %rdi   #
+	movq  %rax, %rsi   #
+	callq power        # result = power(m, n)
+	movq  %rax, %rdi   # arg 1 = result
+	callq push         # push result to top of the stack
+	jmp   loop         # 'return'
 
 .globl power
 # returns rdi^rsi
