@@ -1,8 +1,5 @@
 .DEFAULT_TARGET=all
 
-# TODO: remove
-CFLAGS ?= -g
-
 .PHONY: all build test clean
 all: build test clean
 
