@@ -4,10 +4,10 @@
 all: build test clean
 
 build:
-     exit 0
+	exit 0
 
 test:
-     exit 0
+	exit 0
 
 clean:
-     exit 0
+	exit 0
