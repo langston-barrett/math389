@@ -8,6 +8,7 @@ in rec {
     version = "1";
     src = ./.;
     buildInputs = with pkgs; [
+      clang-tools # for clang-format
       gcc6
       gnumake42
     ];
