@@ -45,7 +45,18 @@
     }                                                                          \
   } while (0)
 
-// TODO: assert_str_eq
+#define assert_str_eq(str1, str2)                                              \
+  do {                                                                         \
+    tests_run++;                                                               \
+    if (strcmp(str1, str2) != 0) {                                             \
+      tests_failed++;                                                          \
+      snprintf(message, 1024,                                                  \
+               "%s failed:\n\t%s:%d: expected %s == %s, got %s", __func__,     \
+               __FILE__, __LINE__, #str2, str1, str2);                         \
+      return message;                                                          \
+    }                                                                          \
+  } while (0)
+
 #define run_test(test)                                                         \
   do {                                                                         \
     char *message = test();                                                    \
