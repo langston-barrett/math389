@@ -9,9 +9,9 @@ static uint64_t tests_failed = 0;
 static char message[1024];
 
 static char *test_csv() {
-  double arr1[] = {1, 2, 3};
-  int64_t arr2[] = {9, 8, 7};
-  assert_str_eq("1.000000,9\n2.000000,8\n3.000000,7\n", csv(arr1, arr2, 3));
+  int64_t arr1[] = {9, 8, 7};
+  double arr2[] = {1, 2, 3};
+  assert_str_eq("9,1.000000\n8,2.000000\n7,3.000000\n", csv(arr1, arr2, 3));
   return 0;
 }
 
