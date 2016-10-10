@@ -17,7 +17,7 @@ static char *test_csv() {
 
 static char *test_str_to_file() {
   assert(str_to_file("./tmp", "gatlin"));
-  //assert_int64_eq(0, remove("./tmp"));
+  assert_int64_eq(0, remove("./tmp"));
   return 0;
 }
 
