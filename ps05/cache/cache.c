@@ -16,8 +16,10 @@ double *find_cache_size(int stepSize, int64_t expectedCacheSize) {
     }
     int64_t x = (int64_t)rand();
     /* Warm up the array */
-    for (int k = 0; k < i; k++) {
-      x = x ^ arrayOfTestValue[k];
+    for (int l = 0; i < 10; l++) {
+      for (int k = 0; k < i; k++) {
+        x = x ^ arrayOfTestValue[k];
+      }
     }
     /* Time the array cache fetching for this i */
     clock_t begin = clock();
