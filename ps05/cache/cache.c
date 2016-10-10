@@ -4,24 +4,29 @@
 void main() {
 }
 
-/* For L1 caches the size is something like 64000 bytes on AMD processors */
-void testacache(int64 max_cache) {
-  int64 arrayOfTestValues[max_cache];
-  for (int step = 0; step < max_cache; step++) {
+/* @brief Create an array of int64s, time the cache accessing those and return the timings
+   @param cache_size The expected size of the cache
+   @return the array representation of the timing of our cache
+*/
+double* testacache(int64 cache_size) {
+  int64 array_size = (cache_size / 8) + 1;
+  int64 arrayOfTestValues[array_size];
+  for (int step = 0; step < array_size; step++) {
     arrayOfTestValues[step] = step;
   }
   /* Warm up the cache by moving through the array once */
   int64 x = random_int64();
-  for (int i = 0; i < 10*(max_cache); i++) {
+  for (int i = 0; i < 10*(array_size); i++) {
     x = x ^ arrayOfTestValues[i];
   }
   /* Time the cache by running through the array ten times */
   x = random_int64();
-  double timerArray[max_cache];
-  for (int i =0; i < 10*(max_cache); i++) {
+  double* timerArray[array_size];
+  for (int i =0; i < 10*(arry_size); i++) {
     clock_t begin = clock();
     x = x ^ arrayOfTestValues[i];
     clock_t end = clock();
     timerArray[i] = (double)(end - begin) / CLOCK_PER_SEC;
   }
+  return timerArray;
 }
