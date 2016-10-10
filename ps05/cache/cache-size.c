@@ -2,8 +2,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-void main() {}
-
 double *find_cache_size(int stepSize, int64_t expectedCacheSize) {
   int64_t arraySize = expectedCacheSize / 8;
   double *timeArray = malloc(sizeof(double)*arraySize);
