@@ -4,12 +4,39 @@
 
 void main() {}
 
+double *find_cache_size(int stepSize, int64_t expectedCacheSize) {
+  double *timeArray[expectedCacheSize]; /* Does this need to be = (expectedCacheSize / 8) + 1 */
+  srand(time(NULL);
+  for(int i = 0; i < expectedCacheSize; i++) {
+    int64_t arrayOfTestValues[i];
+    /* Seed the array with random values */
+    for (int k = 0; k < i; k++) {
+      arrayOfTestValue[k] = (int64_t)rand();
+    }
+    int64_t x = (int64_t)rand();
+    /* Warm up the array */
+    for (int k = 0; k < i; k++) {
+      x = x ^ arrayOfTestValue[k];
+    }
+    /* Time the array cache fetching for this i */
+    clock_t begin = clock();
+    for (int k = 0; k < i; k++) {
+      x = x ^ arrayOfTestValue[k];
+    }
+    clock_t end = clock();
+    timeArray[i] = (double)(end - begin) / CLOCKS_PER_SEC;
+  }
+  return timeArray;
+}
+
+
+
 /* @brief Create an array of int64s, time the cache accessing those and return
    the timings
    @param cache_size The expected size of the cache
    @return the array representation of the timing of our cache
 */
-double *test_a_cache_size(int64_t cache_size) {
+double *test_timing_of_hits_miss(int64_t cache_size) {
   int64_t array_size = (cache_size / 8) + 1;
   int64_t arrayOfTestValues[array_size];
   for (int step = 0; step < array_size; step++) {
