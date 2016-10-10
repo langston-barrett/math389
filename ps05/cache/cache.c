@@ -9,7 +9,7 @@ void main() {}
    @param cache_size The expected size of the cache
    @return the array representation of the timing of our cache
 */
-double *testacache(int64_t cache_size) {
+double *test_a_cache_size(int64_t cache_size) {
   int64_t array_size = (cache_size / 8) + 1;
   int64_t arrayOfTestValues[array_size];
   for (int step = 0; step < array_size; step++) {
@@ -42,4 +42,18 @@ int64_t random_int64() {
      Do our random int64s need to be uniform? */
   int64_t r = (int64_t)rand();
   return r;
+}
+
+/* @brief subtracts hitspeed from each time found in our time array
+   @param timeArray Our timeArray found in test_a_cache_size
+   @param hitspeed How long it takes for the cache to get a hit
+   @param array_size The size of our array
+   @return the array of our missPenalities
+*/
+double *findMissPenalities(double *timeArray, double hitSpeed, int64_t array_size) {
+  double *missPenalties[array_size];
+  for (i = 0; i < array_size, i++) {
+    missPenalties[i] = timeArray[i] - hitSpeed;
+  }
+  return missPenalties;
 }
