@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <time.h>
+#include <stdlib.h>
 
 void main() {
 }
@@ -30,4 +31,15 @@ double* testacache(int64_t cache_size) {
     timerArray[i] = (double)(end - begin) / CLOCK_PER_SEC;
   }
   return timerArray;
+}
+
+/* @brief Generates a random int and casts as int64
+   @return returns the int64_t that was generated
+*/
+int64_t random_int64() {
+  srand(time(NULL));
+  /* Should we be using rand()? Do we need a limited range?
+     Do our random int64s need to be uniform? */
+  int64_t r = (int64_t)rand();
+  return r;
 }
