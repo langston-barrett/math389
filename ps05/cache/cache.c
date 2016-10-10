@@ -5,9 +5,10 @@
 void main() {}
 
 double *find_cache_size(int stepSize, int64_t expectedCacheSize) {
-  double *timeArray[expectedCacheSize]; /* Does this need to be = (expectedCacheSize / 8) + 1 */
+  int64_t arraySize = expectedCacheSize / 8;
+  double *timeArray[arraySize];
   srand(time(NULL);
-  for(int i = 0; i < expectedCacheSize; i++) {
+  for(int i = 0; i < arraySize; i = i + stepsize) {
     int64_t arrayOfTestValues[i];
     /* Seed the array with random values */
     for (int k = 0; k < i; k++) {
