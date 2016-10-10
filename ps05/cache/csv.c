@@ -40,6 +40,10 @@ bool str_to_file(char *filepath, char *data) {
     if (fputs (data, file_out) != EOF) {
       to_return = true;
     }
+    // make sure to finish with a newline as per the POSIX spec!
+    if (data[strlen(data)-1] != '\n') {
+      fputs("\n", file_out);
+    }
     fclose(file_out);
   }
   return to_return;
