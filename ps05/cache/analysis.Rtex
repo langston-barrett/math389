@@ -1,0 +1,28 @@
+% -*- mode: tex -*-
+% Compile with: make analysis
+
+\documentclass{article}
+\usepackage{titling}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead[L]{\theauthor}
+\fancyhead[C]{\thetitle}
+\fancyhead[R]{\thedate}
+% \input{/home/siddharthist/sync/tex/preamble.tex}
+\begin{document}
+\title{Math 389: Cache Analysis}
+\author{Langston Barrett and Gatlin Newhouse}
+\date{\today}
+
+\maketitle
+
+%% begin.rcode cache=FALSE, fig.width=6, fig.height=4
+% library(ggplot2)
+% data <- read.csv("cache-size-data.csv", header=TRUE)
+% print(head(data))
+% graph = ggplot(data, aes(x=size, y=time)) + geom_point() + geom_jitter()
+% graph
+%% end.rcode
+
+\end{document}

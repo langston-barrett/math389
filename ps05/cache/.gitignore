@@ -2,3 +2,7 @@
 tmp
 # binary
 cache
+# results
+cache-size-data.csv
+# Rtex intermediary source
+*.tex

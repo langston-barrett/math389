@@ -11,6 +11,12 @@ all: build test clean
 build: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen.h csv.o main.o
 	$(CC) $(CFLAGS) -o cache -lm cache-penalty.o cache-size.o csv.o main.o
 
+analysis:
+	#nix-shell .
+	R --no-save --no-restore -e "require(knitr); knit('analysis.Rtex')"
+	lualatex analysis.tex
+
 test: csv-test
+
 
 $(call test,csv)

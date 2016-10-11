@@ -35,12 +35,11 @@ bool str_to_file(char *filepath, char *data) {
   bool to_return = false;
   if (file_out != NULL) {
     // "On error, the function returns EOF and sets the error indicator"
-    if (fputs (data, file_out) != EOF) {
-      to_return = true;
-    }
+    if (fputs ("size,time\n", file_out) != EOF) {to_return = true;}
+    if (fputs (data, file_out) != EOF) {to_return = true;}
     // make sure to finish with a newline as per the POSIX spec!
     if (data[strlen(data)-1] != '\n') {
-      fputs("\n", file_out);
+      if (fputs ("\n", file_out) != EOF) {to_return = true;}
     }
     fclose(file_out);
   }
