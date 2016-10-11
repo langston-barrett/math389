@@ -34,7 +34,6 @@ bool str_to_file(char *filepath, char *data) {
   FILE *file_out = fopen(filepath, "w");
   bool to_return = false;
   if (file_out != NULL) {
-    fputs(data, file_out);
     // "On error, the function returns EOF and sets the error indicator"
     if (fputs (data, file_out) != EOF) {
       to_return = true;
