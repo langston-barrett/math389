@@ -2,7 +2,7 @@
 let
   pkgs = import <nixpkgs> {};
   stdenv = pkgs.stdenv;
-in rec {
+in {
   math389 = stdenv.mkDerivation rec {
     name = "math389";
     version = "1";
