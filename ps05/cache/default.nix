@@ -5,9 +5,11 @@
 # http://nixos.org/nix/manual/#sec-nix-shell
 with import <nixpkgs> {}; stdenv.mkDerivation {
   name = "dots";
-  buildInputs = with rPackages; [
-    knitr
-    ggplot2
+  buildInputs = [
+    gcc6
+    gnumake42
+    rPackages.ggplot2
+    rPackages.knitr
     zsh
   ];
 }
