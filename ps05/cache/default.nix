@@ -4,8 +4,9 @@
 # https://nixos.org/wiki/Development_Environments
 # http://nixos.org/nix/manual/#sec-nix-shell
 with import <nixpkgs> {}; stdenv.mkDerivation {
-  name = "dots";
+  name = "cache";
   buildInputs = [
+    R
     gcc6
     gnumake42
     rPackages.ggplot2
