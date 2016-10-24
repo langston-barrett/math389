@@ -13,7 +13,7 @@ build: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen
 
 analysis: build
 	#nix-shell .
-	./cache
+	[[ -f cache-size-data.csv ]] || ./cache
 	R --no-save --no-restore -e "require(knitr); knit('analysis.Rtex')"
 	lualatex analysis.tex
 

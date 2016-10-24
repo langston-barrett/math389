@@ -5,6 +5,7 @@
 # http://nixos.org/nix/manual/#sec-nix-shell
 with import <nixpkgs> {}; stdenv.mkDerivation {
   name = "cache";
+  src = null;
   buildInputs = [
     R
     gcc6
