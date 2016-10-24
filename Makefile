@@ -6,7 +6,7 @@ PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 NIX_SHELL := $(shell command -v nix-shell 2> /dev/null)
 SUBMAKE := $(MAKE) -e -C $$$$ps $(1) || exit 1
 ifdef NIX_SHELL
-SUBMAKE := nix-shell -A math389 --command "$(SUBMAKE)"
+SUBMAKE := nix-shell --command "$(SUBMAKE)"
 endif
 
 export CFLAGS?=-std=gnu11
