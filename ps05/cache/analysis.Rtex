@@ -22,7 +22,12 @@
 % data <- read.csv("cache-size-data.csv", header=TRUE)
 % print(head(data))
 % graph = ggplot(data, aes(x=size, y=time)) + geom_point() + geom_jitter()
-% graph
+% ggsave('cache-size-plot.png', plot = graph, scale = 1, dpi = 300)
 %% end.rcode
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=1]{cache-size-plot.png}
+\end{figure}
 
 \end{document}

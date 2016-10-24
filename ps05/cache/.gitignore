@@ -6,3 +6,4 @@ cache
 cache-size-data.csv
 # Rtex intermediary source
 *.tex
+*.png
