@@ -5,6 +5,7 @@
 # http://nixos.org/nix/manual/#sec-nix-shell
 with import <nixpkgs> {}; stdenv.mkDerivation {
   name = "math389";
+  src = null;
   buildInputs = [
     clang-tools # for clang-format
     gcc6
