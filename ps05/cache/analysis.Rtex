@@ -5,19 +5,57 @@
 \usepackage{titling}
 \usepackage{geometry}
 \usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{fontspec}
+\newfontfamily{\lstsansserif}[Scale=1]{DejaVu Sans Mono} % Monoid also good
+\lstset{basicstyle=\footnotesize\lstsansserif,breaklines=true}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{ %
+  backgroundcolor=\color{white},   % choose the background color
+  basicstyle=\footnotesize,        % size of fonts used for the code
+  breaklines=true,                 % automatic line breaking only at whitespace
+  captionpos=b,                    % sets the caption-position to bottom
+  keywordstyle=\color{blue},       % keyword style
+  stringstyle=\color{mymauve},     % string literal style
+  commentstyle=\color{mygray},     % comment style
+}
+\usepackage{minted}
 \pagestyle{fancy}
 \fancyhead[L]{\theauthor}
 \fancyhead[C]{\thetitle}
 \fancyhead[R]{\thedate}
+\renewcommand{\maketitle}{\fancypagestyle{firststyle}{
+  \fancyhead[L]{\theauthor}
+  \fancyhead[C]{\huge\thetitle}
+  \fancyhead[R]{\thedate}
+}
+\thispagestyle{firststyle}}
 % \input{/home/siddharthist/sync/tex/preamble.tex}
 \begin{document}
 \title{Math 389: Cache Analysis}
-\author{Langston Barrett and Gatlin Newhouse}
+\author{Langston, Gatlin}
 \date{\today}
 
 \maketitle
 
-%% begin.rcode fig.width=6, fig.height=4
+%% begin.rcode echo=FALSE
+% # Just some display options for knitr, not output to tex
+% opts_chunk$set(cache=TRUE, tidy=TRUE, highlight=TRUE)
+%% end.rcode
+
+Here's the code we use to generate the data:
+\subsection*{main.c}
+\inputminted{c}{main.c}
+\subsection*{csv.c}
+\inputminted{c}{csv.c}
+\subsection*{cache-size.c}
+\inputminted{c}{cache-size.c}
+
+\subsection*{analysis.R}
+And the R code that generated the graph:
+%% begin.rcode cache=FALSE, fig.width=6, fig.height=4
 % library(ggplot2)
 % library(dplyr)
 % data <- read.csv("cache-size-data.csv", header=TRUE)
@@ -27,9 +65,22 @@
 % ggsave('cache-size-plot.png', plot = graph, scale = 1, dpi = 300)
 %% end.rcode
 
+And the graph itself is shown in Figure~\ref{fig:graph1}.
+ 
 \begin{figure}[ht]
   \centering
   \includegraphics[scale=1]{cache-size-plot.png}
+  \caption{\label{fig:graph1}Time of several traversals arrays of different sizes}
 \end{figure}
+
+We assume that the some cache may be at size $3\cdot 10^5$, or 300kb, since this
+is the only deviation. However, it seems that our methodology must be awry. This
+could be because we are traversing the array in order, and the processor fetches
+data into the cache gradually as we traverse it (some kind of prefetching). As
+we run through the same array in the same order, a similar principle to
+instruction caching may apply.
+
+It seems that the data get more noisey towards the tail, it may be that the
+process loses core priority/ownership after some amount of time.
 
 \end{document}
