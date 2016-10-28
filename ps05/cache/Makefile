@@ -15,7 +15,7 @@ analysis: build
 	#nix-shell .
 	[[ -f cache-size-data.csv ]] || ./cache
 	R --no-save --no-restore -e "require(knitr); knit('analysis.Rtex')"
-	lualatex analysis.tex
+	lualatex -shell-escape analysis.tex
 
 test: csv-test
 
