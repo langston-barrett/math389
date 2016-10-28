@@ -20,16 +20,16 @@
 %% begin.rcode fig.width=6, fig.height=4
 % library(ggplot2)
 % library(dplyr)
-% data <- read.csv("cache-size-data.csv", header=TRUE)
+% data <- read.csv("cache-penalty-data.csv", header=TRUE)
 % print(head(data))
 % data2 <- data %>% mutate(ynorm = time / size)
 % graph = ggplot(data2, aes(x=size, y=time)) + geom_point() + geom_jitter()
-% ggsave('cache-size-plot.png', plot = graph, scale = 1, dpi = 300)
+% ggsave('cache-penalty-plot.png', plot = graph, scale = 1, dpi = 300)
 %% end.rcode
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[scale=1]{cache-size-plot.png}
+  \includegraphics[scale=1]{cache-penalty-plot.png}
 \end{figure}
 
 \end{document}

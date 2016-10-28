@@ -12,6 +12,7 @@ with import <nixpkgs> {}; stdenv.mkDerivation {
     gnumake42
     rPackages.ggplot2
     rPackages.knitr
+    rPackages.dpyr
     zsh
   ];
 }

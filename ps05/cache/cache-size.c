@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdio.h> // to print final x value
 #include <stdlib.h>
+#include <math.h>
 
 /**
    @brief Find the cache size
@@ -15,7 +16,7 @@ double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t trav
   srand(time(NULL)); // seed the random generator.
 
   // each entry is 64 bits = 8 bytes, step size is in entries
-  int64_t arraySize = expected_cache_size / (8 * step_size);
+  int64_t arraySize = expected_cache_size / (4 * step_size);
   double *times = malloc(arraySize * sizeof(double));
 
   int64_t x = (int64_t)rand();
@@ -37,6 +38,7 @@ double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t trav
 
     clock_t end = clock();
     times[i] = (double)(end - begin) / CLOCKS_PER_SEC;
+    step_size = 2 * step_size;
   }
 
   printf("To prevent compiler optimization: %li\n", x);
