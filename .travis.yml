@@ -1,2 +1,2 @@
 language: nix
-script: nix-shell -A math389 --command make
+script: nix-shell --command make
