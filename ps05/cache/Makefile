@@ -12,7 +12,7 @@ build: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen
 	$(CC) $(CFLAGS) -o cache -lm cache-penalty.o cache-size.o csv.o main.o
 
 buildpenalty: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen.h csv.o main.o
-	$(CC) $(CFLAGS) -g3 -o penalty -lm cache-penalty.o cache-size.o csv.o main.o
+	$(CC) $(CFLAGS) -g -o penalty -lm cache-penalty.o cache-size.o csv.o main.o
 
 analysis: build
 	#nix-shell .
