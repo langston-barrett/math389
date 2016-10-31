@@ -8,7 +8,7 @@ all: build test clean
 %.gen.h: %.c ../../makeheaders.sh $(DEPS)
 	bash ../../makeheaders.sh $<;
 
-build: cache-size.gen.h cache-size.o csv.gen.h csv.o main.o random-array.o random-array.gen.h
+build: cache-size.gen.h cache-size.o csv.gen.h csv.o random-array.gen.h random-array.o main.o 
 	$(CC) $(CFLAGS) -o cache -lm cache-size.o csv.o random-array.o main.o
 
 analysis: build
