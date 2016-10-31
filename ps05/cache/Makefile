@@ -26,7 +26,7 @@ penalty: buildpenalty
 	R --no-save --no-restore -e "require(knitr); knit('penalty.Rtex')"
 	lualatex penalty.tex
 
-test: csv-test
-
+test: csv-test random-array-test
 
 $(call test,csv)
+$(call test,random-array)
