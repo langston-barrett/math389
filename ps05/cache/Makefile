@@ -8,11 +8,8 @@ all: build test clean
 %.gen.h: %.c ../../makeheaders.sh $(DEPS)
 	bash ../../makeheaders.sh $<;
 
-build: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen.h csv.o main.o
-	$(CC) $(CFLAGS) -o cache -lm cache-penalty.o cache-size.o csv.o main.o
-
-buildpenalty: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen.h csv.o main.o
-	$(CC) $(CFLAGS) -g -o penalty -lm cache-penalty.o cache-size.o csv.o main.o
+build: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen.h csv.o main.o random-array.o random-array.gen.h
+	$(CC) $(CFLAGS) -o cache -lm cache-penalty.o cache-size.o csv.o random-array.o main.o
 
 analysis: build
 	#nix-shell .
@@ -29,4 +26,5 @@ penalty: buildpenalty
 test: csv-test random-array-test
 
 $(call test,csv)
-$(call test,random-array)
+$(call test,random-array)gcc    -c -o cache-size.o cache-size.c
+
