@@ -12,7 +12,7 @@
    @param expected_cache_size The maximum expected size of this level of cache,
    measured in bits.
    @return An array of times it took to read through the cache
-*/
+**/
 double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t traversals) {
   srand(time(NULL)); // seed the random generator.
 
@@ -39,6 +39,8 @@ double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t trav
     }
     clock_t end = clock();
     times[i] = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    free(test_values);
   }
 
   printf("To prevent compiler optimization: %li\n", x);
