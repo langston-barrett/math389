@@ -26,5 +26,5 @@ penalty: buildpenalty
 test: csv-test random-array-test
 
 $(call test,csv)
-$(call test,random-array)gcc    -c -o cache-size.o cache-size.c
+$(call test,random-array)
 
