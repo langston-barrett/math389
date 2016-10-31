@@ -11,7 +11,7 @@
 */
 double *find_cache_penalty(int64_t cache_size) {
   // make an array, fill it with values
-  int64_t arr[cache_size * 2];
+  int64_t *arr = malloc(2 * cache_size * sizeof(int64_t));
   for (int64_t i = 0; i < cache_size * 2; i++) {
     arr[i] = rand();
   }
