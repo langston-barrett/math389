@@ -23,7 +23,7 @@ double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t trav
   // vary the array size and look at the 2nd run through after 1 warm up
   // to find the cache penalty then just look at the # of times fetched and the timining
   int64_t x = (int64_t)rand();
-  for (int64_t i = 0; i < arraySize; i = i + step_size) {
+  for (int64_t i = 1; i < arraySize; i = i + step_size) {
     // printf("Examining array of length %i\n", i);
     // call to Langston's function which generates an array of mod(i) w/ randomized order
     int64_t *test_values = random_array(i);

@@ -9,7 +9,7 @@ all: build test clean
 	bash ../../makeheaders.sh $<;
 
 build: cache-penalty.gen.h cache-penalty.o cache-size.gen.h cache-size.o csv.gen.h csv.o main.o random-array.o random-array.gen.h
-	$(CC) $(CFLAGS) -o cache -lm cache-penalty.o cache-size.o csv.o random-array.o main.o
+	$(CC) $(CFLAGS) -g -o cache -lm cache-penalty.o cache-size.o csv.o random-array.o main.o
 
 analysis: build
 	#nix-shell .
