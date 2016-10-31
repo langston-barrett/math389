@@ -10,6 +10,7 @@ with import <nixpkgs> {}; stdenv.mkDerivation {
     R
     gcc6
     gnumake42
+    rPackages.dplyr
     rPackages.ggplot2
     rPackages.knitr
     pythonPackages.pygments # latex package minted

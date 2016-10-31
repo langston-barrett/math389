@@ -39,6 +39,8 @@ double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t trav
     }
     clock_t end = clock();
     times[i] = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    free(test_values);
   }
 
   printf("To prevent compiler optimization: %li\n", x);
