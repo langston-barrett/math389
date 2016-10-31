@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -11,6 +12,8 @@ const int64_t shuffles = 1000;
    @param shuffles How many times to shuffle the elements.
 */
 int64_t *random_array2(int64_t size, int64_t shuffles) {
+  assert(size != 0);
+
   srand(time(NULL));
   int64_t *arr = malloc(size*sizeof(int64_t));
 
