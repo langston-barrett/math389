@@ -3,6 +3,7 @@
 #include <stdio.h> // to print final x value
 #include <stdlib.h>
 #include <math.h>
+#include "./random-array.gen.h"
 
 /**
    @brief Find the cache size
@@ -25,22 +26,23 @@ double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t trav
   int64_t x = (int64_t)rand();
   for (int i = 0; i < arraySize; i = i + step_size) {
     // printf("Examining array of length %i\n", i);
-    int64_t test_values[i];
+    
+    // call to Langston's function which generates an array of mod(i) w/ randomized order
+    random_array(i);
 
-    for (int k = 0; k < i; k++) {
-      test_values[k] = (int64_t)rand();
-    }
-
+    int address = 0;
     // printf("Timing %li traversals\n", traversals);
     clock_t begin = clock();
     for (int l = 0; l < traversals; l++) {
       for (int k = 0; k < i; k++) {
-        x = x ^ test_values[k];
+        address = test_valeus[k];
+        x = x ^ test_values[address];
       }
     }
-
     clock_t end = clock();
+    
     times[i] = (double)(end - begin) / CLOCKS_PER_SEC;
+    
     step_size = 2 * step_size;
   }
 
