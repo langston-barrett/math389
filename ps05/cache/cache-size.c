@@ -43,7 +43,7 @@ double *find_cache_size(int step_size, int64_t expected_cache_size, int64_t trav
     
     times[i] = (double)(end - begin) / CLOCKS_PER_SEC;
     
-    step_size = 2 * step_size;
+    //step_size = 2 * step_size;
   }
 
   printf("To prevent compiler optimization: %li\n", x);
