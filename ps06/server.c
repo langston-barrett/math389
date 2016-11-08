@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -18,11 +19,35 @@
 #define MAXLINE 80
 #define CONNECTIONS 128
 
-// play a Klondike game with a single client
-void play_with_client(int connfd, uint8_t client_id) {
+typedef struct _client_t {
+  int id;
+  int connection;
+  struct sockaddr_in address;
+} client_t;
 
-  char *cmd = malloc(MAXLINE*sizeof(char)); // receive from client
-  char *msg = malloc(MAXLINE*sizeof(char)); // send to client
+// play a Klondike game with a single client
+void *play_with_client(void *ci) {
+  /********************* Networking *********************/
+
+  assert(ci != NULL);
+  client_t *client = (client_t *)ci;
+  assert(client != NULL);
+
+  // Report the client that connected.
+  struct hostent *hostp;
+  if ((hostp = gethostbyaddr((const char *)&client->address.sin_addr.s_addr,
+                             sizeof(struct in_addr), AF_INET)) == NULL) {
+    fprintf(stderr, "[WARN] gethostbyaddr failed.");
+  } else {
+    // Record that the client connected.
+    printf("[INFO] Accepted connection from client %d %s (%s)\n", client->id,
+           hostp->h_name, inet_ntoa(client->address.sin_addr));
+  }
+
+  /********************* Setup *********************/
+
+  char *cmd = malloc(MAXLINE * sizeof(char)); // receive from client
+  char *msg = malloc(MAXLINE * sizeof(char)); // send to client
 
   // send client seed to generate deck with
   struct timeval tp;
@@ -30,38 +55,43 @@ void play_with_client(int connfd, uint8_t client_id) {
   char seedstr[80];
   long seed = tp.tv_sec;
   sprintf(seedstr, "%li", seed);
-  cmd = return_service_requested(connfd, seedstr);
+  cmd = return_service_requested(client->connection, seedstr);
 
   // initialize game
   solitaire_t *S = newSolitaire(seed);
   arena_t *A = newArena();
 
+  /********************* Gameplay *********************/
   // while the game is still going...
   while (cmd != NULL) {
     // validate command, attempt to update game state
     char *error = validate_command(cmd, S);
     if (error != NULL) {
-      printf("[DEBUG] Validation error, client #%d: %s\n", client_id, error);
+      printf("[DEBUG] Validation error, client #%d: %s\n", client->id, error);
       msg = error;
     } else {
       error = update(cmd, A, S);
       if (error != NULL) {
-        printf("[DEBUG] Update error, client #%d: %s\n", client_id, error);
+        printf("[DEBUG] Update error, client #%d: %s\n", client->id, error);
         msg = error;
       } else {
-        printf("[DEBUG] Success, client #%d\n", client_id);
-        if (DEBUG) putArena(A);
-        if (DEBUG) putSolitaire(S);
+        printf("[DEBUG] Success, client #%d\n", client->id);
+        if (DEBUG)
+          putArena(A);
+        if (DEBUG)
+          putSolitaire(S);
         msg = "success";
       }
     }
 
-    printf("[INFO] Replying to #%d: %s\n", client_id, msg);
-    cmd = return_service_requested(connfd, msg);
-    printf("[INFO] Received message from #%d: %s", client_id, cmd);
+    printf("[INFO] Replying to #%d: %s\n", client->id, msg);
+    cmd = return_service_requested(client->connection, msg);
+    printf("[INFO] Received message from #%d: %s", client->id, cmd);
   }
-  printf("[INFO] Client #%d disconnected.\n", client_id);
-  close(connfd);
+  printf("[INFO] Client #%d disconnected.\n", client->id);
+  close(client->connection);
+  free(client);
+  free(ci);
 }
 
 int main(int argc, char **argv) {
@@ -107,33 +137,23 @@ int main(int argc, char **argv) {
   while (1) {
     /* TODO minimize this code! dispatch sooner */
 
-    int connfd;
+    client_t *client = malloc(sizeof(client_t));
+    client->id = clients;
+    clients++;
 
     // Accept a connection from a client, get a file descriptor for
     // communicating with the client.
     socklen_t acceptlen = sizeof(struct sockaddr_in);
     struct sockaddr_in clientaddr;
-    if ((connfd = accept(listenfd, (struct sockaddr *)&clientaddr,
-                         &acceptlen)) < 0) {
+    if ((client->connection = accept(listenfd, (struct sockaddr *)&clientaddr,
+                                     &acceptlen)) < 0) {
       fprintf(stderr, "[WARN] Accept failed.\n");
       exit(-1);
     }
 
-    // Report the client that connected.
-    struct hostent *hostp;
-    if ((hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr,
-                               sizeof(struct in_addr), AF_INET)) == NULL) {
-      fprintf(stderr, "[WARN] gethostbyaddr failed.");
-    }
-
-    // Record that the client connected.
-    clients++;
-    printf("[INFO] Accepted connection from client %d %s (%s)\n", clients,
-           hostp->h_name, inet_ntoa(clientaddr.sin_addr));
-
-    // Dispatch.
-    printf("[DEBUG] Dispatching to client handling function.\n");
-    play_with_client(connfd, clients);
+    // create a thread to handle the client
+    pthread_t tid;
+    pthread_create(&tid, NULL, play_with_client, (void *)client);
   }
 
   close(listenfd);
