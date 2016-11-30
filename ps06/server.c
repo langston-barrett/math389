@@ -16,23 +16,93 @@
 #define DEBUG 1
 #endif
 
+/*************************** Definitions ***************************/
+
 #define MAXLINE 80
 #define CONNECTIONS 128
 
+// TODO global arena, seed
+
 typedef struct _client_t {
-  int id;
   int connection;
+  uint8_t id;
+  long seed; // used to generate deck
+  arena_t *arena; // which game they're in
   struct sockaddr_in address;
 } client_t;
 
+/*************************** Playing ***************************/
+char *respond(client_t *client, char *cmd, solitaire_t *solitaire) {
+  assert(cmd != NULL);
+  assert(solitaire != NULL);
+  assert(client != NULL);
+  assert(client->arena != NULL);
+  for (uint8_t i = 0; i < client->arena->players; i++)
+    assert(client->arena->suits[i] != NULL);
+
+  // check for valid non-play commands
+  if (cmd[0] == 'u') {
+    return arena_to_str(client->arena);
+
+  } else if (cmd[0] == 's') { // return client's seed
+    char *seedstr = malloc(80*sizeof(char)); // TODO: real upper bound?
+    sprintf(seedstr, "%lu", client->seed);
+    return seedstr;
+
+  } else if (cmd[0] == 'i') { // return client's id
+    char *idstr = malloc(80*sizeof(char)); // TODO: real upper bound?
+    sprintf(idstr, "%d", client->id);
+    return idstr;
+
+  } else {
+    // validate command, attempt to update game state
+    char *error = validate_command(cmd, solitaire);
+    if (error != NULL) {
+      printf("[DEBUG] Validation error, client #%d: %s\n", client->id, error);
+      return error;
+    } else {
+      error = update(cmd, client->arena, solitaire);
+      if (error != NULL) {
+        printf("[DEBUG] Update error, client #%d: %s\n", client->id, error);
+        return error;
+      } else {
+        printf("[DEBUG] Success, client #%d\n", client->id);
+        if (DEBUG)
+          putArena(client->arena);
+        if (DEBUG)
+          putSolitaire(solitaire);
+        return "success";
+      }
+    }
+  }
+  printf("[ERROR] Should be unreachable!\n");
+  return NULL;
+}
+
 // play a Klondike game with a single client
 void *play_with_client(void *ci) {
-  /********************* Networking *********************/
-
   assert(ci != NULL);
+
+  /********************* Setup *********************/
+  char *cmd = malloc(MAXLINE * sizeof(char)); // receive from client
   client_t *client = (client_t *)ci;
   assert(client != NULL);
+  assert(client->arena != NULL);
+  assert(client->arena->lock != NULL);
 
+  // add a player to the arena, add their stacks to the arena
+  pthread_mutex_lock(client->arena->lock);
+  for (uint8_t i = client->arena->players; i < client->arena->players+4; i++)
+    client->arena->suits[i] = newStack(0);
+  client->arena->players++;
+  pthread_mutex_unlock(client->arena->lock);
+  // sanity
+  for (uint8_t i = 0; i < client->arena->players; i++)
+    assert(client->arena->suits[i] != NULL);
+
+  solitaire_t *solitaire = newSolitaire(client->seed);
+
+  /********************* Networking *********************/
   // Report the client that connected.
   struct hostent *hostp;
   if ((hostp = gethostbyaddr((const char *)&client->address.sin_addr.s_addr,
@@ -44,72 +114,42 @@ void *play_with_client(void *ci) {
            hostp->h_name, inet_ntoa(client->address.sin_addr));
   }
 
-  /********************* Setup *********************/
-
-  char *cmd = malloc(MAXLINE * sizeof(char)); // receive from client
-  char *msg = malloc(MAXLINE * sizeof(char)); // send to client
-
-  // send client seed to generate deck with
-  struct timeval tp;
-  gettimeofday(&tp, NULL);
-  char seedstr[80];
-  long seed = tp.tv_sec;
-  sprintf(seedstr, "%li", seed);
-  cmd = return_service_requested(client->connection, seedstr);
-
-  // initialize game
-  solitaire_t *S = newSolitaire(seed);
-  arena_t *A = newArena();
+  // get the initial command
+  cmd = read_some(client->connection);
 
   /********************* Gameplay *********************/
-  // while the game is still going...
-  while (cmd != NULL) {
-    // validate command, attempt to update game state
-    char *error = validate_command(cmd, S);
-    if (error != NULL) {
-      printf("[DEBUG] Validation error, client #%d: %s\n", client->id, error);
-      msg = error;
-    } else {
-      error = update(cmd, A, S);
-      if (error != NULL) {
-        printf("[DEBUG] Update error, client #%d: %s\n", client->id, error);
-        msg = error;
-      } else {
-        printf("[DEBUG] Success, client #%d\n", client->id);
-        if (DEBUG)
-          putArena(A);
-        if (DEBUG)
-          putSolitaire(S);
-        msg = "success";
-      }
-    }
-
-    printf("[INFO] Replying to #%d: %s\n", client->id, msg);
-    cmd = return_service_requested(client->connection, msg);
+  while (cmd != NULL) { // while the game is still going...
+    char *response = respond(client, cmd, solitaire);
+    printf("[INFO] Replying to #%d: %s\n", client->id, response);
+    cmd = return_service_requested(client->connection, response);
     printf("[INFO] Received message from #%d: %s", client->id, cmd);
   }
   printf("[INFO] Client #%d disconnected.\n", client->id);
   close(client->connection);
-  free(client);
-  free(ci);
+  if (client != NULL) free(client);
+  if (ci != NULL) free(ci);
+  return NULL;
 }
 
 int main(int argc, char **argv) {
   // Make sure we've been given a port to listen on.
   if (argc != 2) {
     fprintf(stderr, "[WARN] usage: %s <port>\n", argv[0]);
-    exit(1);
+    return 1;
   }
+
+  // initialize game
+  arena_t *arena = newArena();
 
   // Open a socket to listen for client connections.
   int listenfd;
   if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     fprintf(stderr, "[ERROR] Socket creation failed.\n");
-    exit(1);
+    return 1;
   }
 
   // Build the service's info into a (struct sockaddr_in).
-  int port = atoi(argv[1]);
+  int port = atoi(argv[1]); // TODO verify
   struct sockaddr_in serveraddr;
   bzero((char *)&serveraddr, sizeof(struct sockaddr_in));
   serveraddr.sin_family = AF_INET;
@@ -120,13 +160,13 @@ int main(int argc, char **argv) {
   if (bind(listenfd, (struct sockaddr *)&serveraddr, sizeof(struct sockaddr)) <
       0) {
     fprintf(stderr, "[ERROR] Bind failed.\n");
-    exit(1);
+    return 1;
   }
 
   // Listen for client connections on that socket.
   if (listen(listenfd, CONNECTIONS) < 0) {
     fprintf(stderr, "[ERROR] Listen failed.\n");
-    exit(1);
+    return 1;
   }
 
   fprintf(stderr, "[INFO] Klondike server listening on port %d...\n", port);
@@ -135,11 +175,16 @@ int main(int argc, char **argv) {
 
   // Handle client sessions.
   while (1) {
-    /* TODO minimize this code! dispatch sooner */
-
     client_t *client = malloc(sizeof(client_t));
     client->id = clients;
+    client->arena = arena;
     clients++;
+
+
+    // set up seed to generate deck
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    client->seed = tp.tv_sec;
 
     // Accept a connection from a client, get a file descriptor for
     // communicating with the client.
@@ -148,7 +193,7 @@ int main(int argc, char **argv) {
     if ((client->connection = accept(listenfd, (struct sockaddr *)&clientaddr,
                                      &acceptlen)) < 0) {
       fprintf(stderr, "[WARN] Accept failed.\n");
-      exit(-1);
+      return 1;
     }
 
     // create a thread to handle the client
