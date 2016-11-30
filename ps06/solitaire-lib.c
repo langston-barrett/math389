@@ -1,5 +1,7 @@
 /******************************* IMPORTS *******************************/
 #include <assert.h>
+#include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,7 +68,15 @@ typedef struct _stAck_t {
   int type;
 } stAck_t;
 
-typedef struct _arena_t { stAck_t *suit[4]; } arena_t;
+// the size of an arena is 4 * # players
+// the order of suits is: spades hearts clubs diamonds, just like in suit[].
+typedef struct _arena_t {
+  uint8_t players; // should never be more than 9
+  uint8_t id; // unused: for when the server is multi-game
+  stAck_t **suits;
+  pthread_mutex_t *lock;
+} arena_t;
+
 
 typedef struct _solitaire_t {
   int player;
@@ -78,9 +88,10 @@ typedef struct _solitaire_t {
 } solitaire_t;
 
 stAck_t *newStack(int type) {
-  stAck_t *stack = malloc(sizeof(stack));
+  stAck_t *stack = malloc(sizeof(stAck_t));
   stack->top = NULL;
   stack->type = type;
+  assert(stack != NULL);
   return stack;
 }
 
@@ -135,6 +146,102 @@ int okOn(card_t *c1, card_t *c2) {
 
 int isEmpty(stAck_t *stack) { return stack->top == NULL; }
 
+/******************************* ENCODING *******************************/
+
+// encode the arena as a string
+// format: #players stack1_top stack2_top ...
+// where there are 4 * # players stacks and no spaces in between each token
+char *arena_to_str(arena_t *arena) {
+  assert(arena != NULL);
+
+  if (arena->players == 0)
+    return NULL;
+
+  char *arena_str = malloc(80 * sizeof(char));
+  if (arena_str == NULL)
+    printf("NULL arena_str\n");
+
+  // first, send the current number of players
+  char players_str[10]; // TODO: how many digits are really appropriate?
+  sprintf(players_str, "%d", arena->players);
+  strcat(arena_str, players_str);
+
+  // now, append the cards in each stack
+  for (int8_t i = 0; i < 4 * arena->players; i++) {
+    assert(arena->suits != NULL);
+    assert(arena->suits[i] != NULL);
+    // the top can be null, if no cards have been played
+    /* assert(arena->suits[i]->top != NULL); */
+
+    if (arena->suits[i]->top == NULL)
+      strcat(arena_str, "0");
+    else
+      strcat(arena_str, face[arena->suits[i]->top->face]);
+  }
+  return arena_str;
+}
+
+card_t *char_to_card(char card_char, int suit, uint8_t player, stAck_t *stack) {
+  if (card_char == '0')
+    return NULL; // no card
+
+  // construct the initial values
+  card_t *to_return = malloc(sizeof(card_t));
+  assert(to_return != NULL);
+  to_return->face = -1;
+  to_return->suit = suit;
+  to_return->player = (int)player;
+  to_return->below = NULL;
+  to_return->stack = stack;
+
+  for (uint8_t i = 0; i < 14; i++) {
+    if (card_char == face[i][0]) {
+      to_return->face = i;
+    }
+  }
+
+  // reject ill-formed descriptions
+  if (to_return->face == -1) return NULL;
+  /* printf("[ERROR] Invalid card: %c\n", card_char); */
+
+  assert(to_return != NULL);
+  return to_return;
+}
+
+arena_t *str_to_arena(char *arena_str, uint8_t player_id) {
+  arena_t *arena = malloc(sizeof(arena_t));
+
+  // TODO: check that it's a valid int
+  arena->players = (uint8_t)arena_str[0] - '0'; // ASCII char->int
+
+  // create list of stacks
+  arena->suits = malloc(4 * arena->players * sizeof(stAck_t));
+  assert(arena->suits != NULL);
+
+  // fill in stacks
+  for (uint8_t i = 0; i < 4 * arena->players; i++) {
+    // create stack
+    arena->suits[i] = malloc(sizeof(stAck_t));
+    assert(arena->suits[i] != NULL);
+
+    // check if it's the null card
+    if (arena_str[i + 1] == '0' || arena_str[i + 1] == 'O') {
+      arena->suits[i]->top = NULL;
+      continue;
+    }
+
+    // put top card on stack
+    card_t *new_card =
+        char_to_card(arena_str[i + 1], i % 4, player_id, arena->suits[i]);
+    if (new_card == NULL)
+      printf("%c\n", arena_str[i + 1]);
+    assert(new_card != NULL);
+    arena->suits[i]->top = new_card;
+  }
+
+  return arena;
+}
+
 /******************************* PRINTING *******************************/
 
 void putRed() { printf("%s", red); }
@@ -177,15 +284,18 @@ void putStack(stAck_t *stack) {
   }
 }
 
-void putArena(arena_t *A) {
-  assert(A != NULL);
+void putArena(arena_t *arena) {
+  assert(arena != NULL);
 
-  for (int s = 0; s < 4; s++) {
-    putColorOfSuit(s);
-    putSuit(s);
+  printf("Number of players: %d\n", arena->players);
+  for (int8_t i = 0; i < 4 * arena->players; i++) {
+    assert(arena->suits[i] != NULL);
+
+    putColorOfSuit(i % 4);
+    putSuit(i % 4);
     putBack();
     printf(": ");
-    putStack(A->suit[s]);
+    putStack(arena->suits[i]);
     printf("\n");
   }
 }
@@ -213,6 +323,7 @@ void putHelp(char *extra_message) {
   printf("[INFO] \tp <card>: play <card> into the arena\n");
   printf("[INFO] \tm <c1> <c2>: move card 1 onto card 2\n");
   printf("[INFO] \tn: draw the next card from the deck\n");
+  printf("[INFO] \tu: get an updated arena from the server\n");
   printf("[INFO] \tq: exit\n");
   printf("[INFO] Cards are specified as follows <card><suit>\n");
   printf("[INFO] where <card> is one of: 23456789tjqka \n");
@@ -321,11 +432,19 @@ void shuffleInto(deck_t *deck, stAck_t *draw) {
 }
 
 arena_t *newArena(void) {
-  arena_t *A = malloc(sizeof(arena_t));
-  for (int s = 0; s < 4; s++) {
-    A->suit[s] = newStack(s);
-  }
-  return A;
+  arena_t *arena = malloc(sizeof(arena_t));
+  arena->players = 0;
+  arena->suits = malloc(16 * sizeof(stAck_t)); // TODO: this makes max 4 players
+  pthread_mutex_t *lock = malloc(sizeof(pthread_mutex_t));
+
+  // create the lock
+  if (lock == NULL)
+    printf("[FATAL] Out of memory\n");
+  if (pthread_mutex_init(lock, NULL) != 0)
+    printf("[FATAL] Can't create the lock");
+  arena->lock = lock;
+
+  return arena;
 }
 
 solitaire_t *newSolitaire(long seed) {
@@ -375,31 +494,41 @@ void maybeFlip(stAck_t *stack, solitaire_t *S) {
   }
 }
 
+// we have to lock the arena for this bit
 int play(card_t *card, arena_t *arena, solitaire_t *S) {
   assert(card != NULL);
-  assert(arena != NULL);
   assert(S != NULL);
   assert(card->stack != NULL);
-  assert(arena->suit != NULL);
-  assert(arena->suit[card->suit] != NULL);
+
+  assert(arena != NULL);
+  assert(arena->lock != NULL);
+  pthread_mutex_lock(arena->lock); // LOCK
+  assert(arena->suits != NULL);
+  assert(arena->suits[card->suit] != NULL);
 
   stAck_t *stack = card->stack;
-  stAck_t *pile = arena->suit[card->suit];
-  if (isTop(card)) {
-    if (isEmpty(pile)) {
-      if (isAce(card)) {
-        push(pop(stack), pile);
-        maybeFlip(stack, S);
-        return SUCCESS;
-      }
-    } else {
-      if (card->face == top(pile)->face + 1) {
-        push(pop(stack), pile);
-        maybeFlip(stack, S);
-        return SUCCESS;
+
+  for (int8_t i = 0; i < arena->players; i++) {
+    stAck_t *pile = arena->suits[card->suit+(4*i)];
+    if (isTop(card)) {
+      if (isEmpty(pile)) {
+        if (isAce(card)) {
+          push(pop(stack), pile);
+          maybeFlip(stack, S);
+          pthread_mutex_unlock(arena->lock); // UNLOCK
+          return SUCCESS;
+        }
+      } else {
+        if (card->face == top(pile)->face + 1) {
+          push(pop(stack), pile);
+          maybeFlip(stack, S);
+          pthread_mutex_unlock(arena->lock); // UNLOCK
+          return SUCCESS;
+        }
       }
     }
   }
+  pthread_mutex_unlock(arena->lock); // UNLOCK
   return FAILURE;
 }
 
@@ -473,7 +602,8 @@ char *validate_command(char *cmd, solitaire_t *S) {
   }
   if (cmd[0] == 'p') {
     sscanf(cmd, "%s %s", trash, c1);
-    if (cardOf(c1, S) == NULL) return "no such card";
+    if (cardOf(c1, S) == NULL)
+      return "no such card";
 
   } else if (cmd[0] == 'm') {
     sscanf(cmd, "%s %s %s", trash, c1, c2);
@@ -499,7 +629,7 @@ char *validate_command(char *cmd, solitaire_t *S) {
 
 // Update the game state according to cmd
 // Returns error string or NULL if there wasn't an error
-char *update(char* cmd, arena_t *A, solitaire_t *S) {
+char *update(char *cmd, arena_t *A, solitaire_t *S) {
   assert(cmd != NULL);
   assert(A != NULL);
   assert(S != NULL);
@@ -528,7 +658,8 @@ char *update(char* cmd, arena_t *A, solitaire_t *S) {
     } else {
       return "that move cannot be made";
     }
-  } else if (cmd[0] == 'n') { // Draws the next card and puts it on top of the discard pile.
+  } else if (cmd[0] == 'n') { // Draws the next card and puts it on top of the
+                              // discard pile.
     // deck != empty validated above
     push(pop(S->draw), S->discard);
   } else {
@@ -542,7 +673,7 @@ char *update(char* cmd, arena_t *A, solitaire_t *S) {
 
 // read a little!
 char *read_some(int connfd) {
-  char *feedback = malloc(80*sizeof(char));
+  char *feedback = malloc(80 * sizeof(char));
   int n = read(connfd, feedback, 80);
   if (n == 0) {
     // No bytes received. The other end closed the connection.
@@ -556,13 +687,15 @@ char *read_some(int connfd) {
 char *return_service_requested(int connfd, char *msg) {
   assert(msg != NULL);
 
-  if (DEBUG) printf("[DEBUG] Sending message: %s\n", msg);
+  if (DEBUG)
+    printf("[DEBUG] Sending message: %s\n", msg);
 
   if (!write(connfd, msg, strlen(msg) + 1)) {
     printf("[ERROR] Write failed.\n");
     return NULL;
   }
 
-  if (DEBUG) printf("[DEBUG] Awaiting response...\n");
+  if (DEBUG)
+    printf("[DEBUG] Awaiting response...\n");
   return read_some(connfd);
 }

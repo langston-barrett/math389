@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := all
 
-#CFLAGS := -g
+CFLAGS := -g -pthread
 
 .PHONY: all build test clean
 all: build test clean
@@ -17,12 +17,14 @@ client: client.c solitaire-lib.c
 	$(CC) $(CFLAGS) -o client -lm client.o
 
 server: server.c solitaire-lib.c
-	$(CC) $(CFLAGS) -pthread -c server.c
-	$(CC) $(CFLAGS) -pthread -o server -lm server.o
+	$(CC) $(CFLAGS) -c server.c
+	$(CC) $(CFLAGS) -o server -lm server.o
 
 build: client server
 
-#test:
+test: build solitaire-lib.c
+	$(CC) $(CFLAGS) -c test.c
+	$(CC) $(CFLAGS) -o test -lm test.o
 
 .PHONY: clean
 clean:
