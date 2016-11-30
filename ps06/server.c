@@ -37,8 +37,6 @@ char *respond(client_t *client, char *cmd, solitaire_t *solitaire) {
   assert(solitaire != NULL);
   assert(client != NULL);
   assert(client->arena != NULL);
-  for (uint8_t i = 0; i < client->arena->players; i++)
-    assert(client->arena->suits[i] != NULL);
 
   // check for valid non-play commands
   if (cmd[0] == 'u') {
@@ -92,13 +90,8 @@ void *play_with_client(void *ci) {
 
   // add a player to the arena, add their stacks to the arena
   pthread_mutex_lock(client->arena->lock);
-  for (uint8_t i = client->arena->players; i < client->arena->players+4; i++)
-    client->arena->suits[i] = newStack(0);
   client->arena->players++;
   pthread_mutex_unlock(client->arena->lock);
-  // sanity
-  for (uint8_t i = 0; i < client->arena->players; i++)
-    assert(client->arena->suits[i] != NULL);
 
   solitaire_t *solitaire = newSolitaire(client->seed);
 
@@ -125,9 +118,15 @@ void *play_with_client(void *ci) {
     printf("[INFO] Received message from #%d: %s", client->id, cmd);
   }
   printf("[INFO] Client #%d disconnected.\n", client->id);
+
+  // remove from the arena
+  pthread_mutex_lock(client->arena->lock);
+  client->arena->players--;
+  pthread_mutex_unlock(client->arena->lock);
+
   close(client->connection);
-  if (client != NULL) free(client);
-  if (ci != NULL) free(ci);
+  /* if (client != NULL) free(client); */ // TODO: which of these works?
+  /* if (ci != NULL) free(ci); */
   return NULL;
 }
 

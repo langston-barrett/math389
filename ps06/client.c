@@ -110,6 +110,9 @@ int main(int argc, char **argv) {
   while (true) {
     assert(S != NULL);
 
+    // always update the arena
+    arena = get_arena(client_fd, player_id);
+
     // print game state
     if (arena->players > 0) putArena(arena);
     putSolitaire(S);
@@ -171,4 +174,5 @@ int main(int argc, char **argv) {
 
   free(feedback);
   close(client_fd);
+  return 0;
 }
