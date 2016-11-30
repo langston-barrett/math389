@@ -16,11 +16,28 @@ static char *test_play() {
     for (uint8_t face_index = 1; face_index < 14; face_index++) {
       card_t *card = malloc(sizeof(card_t));
       card->face = face_index;
-      card->suit = 2;
+      card->suit = suit_index;
       stAck_t *stack = newStack(0);
       push(card, stack);
 
       massert(play(card, arena, solitaire));
+
+      // the lock should be unlocked
+      massert(pthread_mutex_trylock(arena->lock) == 0);
+      pthread_mutex_unlock(arena->lock);
+    }
+  }
+
+  // can't play anything on top of full stacks that isn't an ace
+  for (uint8_t suit_index = 0; suit_index < 3; suit_index++) {
+    for (uint8_t face_index = 2; face_index < 14; face_index++) {
+      card_t *card = malloc(sizeof(card_t));
+      card->face = face_index;
+      card->suit = suit_index;
+      stAck_t *stack = newStack(0);
+      push(card, stack);
+
+      massert(!play(card, arena, solitaire));
 
       // the lock should be unlocked
       massert(pthread_mutex_trylock(arena->lock) == 0);
@@ -75,33 +92,38 @@ static char *test_arena_to_str() {
   massert(arena_to_str(arena) != NULL);
   assert_str_eq("0", arena_to_str(arena));
 
-  /* arena_t *arena2 = newArena(); */
-  /* solitaire_t *solitaire = newSolitaire(0); */
-  /* play(str_to_card("AS"), arena2, solitaire); */
-  /* assert_str_eq("0", arena_to_str(arena)); */
+  arena_t *arena2 = newArena();
+  solitaire_t *solitaire = newSolitaire(0);
+  card_t *card = str_to_card("AS");
+  stAck_t *stack = newStack(0);
+  push(card, stack);
+  play(card, arena2, solitaire);
+  assert_str_eq("0AS", arena_to_str(arena2));
+
   return 0;
 }
 
-/* static char *test_str_to_arena() { */
-/*   // empty arena */
-/*   arena_t *arena = str_to_arena("1", 0); // 1 player, empty */
-/*   massert(arena != NULL); */
-/*   massert(arena->players == 1); */
-/*   massert(arena->first == NULL); */
+static char *test_str_to_arena() {
+  // empty arena
+  arena_t *arena = str_to_arena("1", 0); // 1 player, empty
+  massert(arena != NULL);
+  massert(arena->players == 1);
+  massert(arena->first == NULL);
 
-/*   arena_t *arena2 = str_to_arena("1AJK9", 0); // 1 player, full */
-/*   massert(arena2 != NULL); */
-/*   massert(arena2->players == 1); */
-/*   massert(arena2->first != NULL); */
-/*   // TODO stronger */
+  arena_t *arena2 = str_to_arena("1ASJHKD9C", 0); // 1 player, full
+  massert(arena2 != NULL);
+  massert(arena2->players == 1);
+  massert(arena2->first != NULL);
+  // TODO stronger
 
-/*   arena_t *arena3 = str_to_arena("2A0K9820T", 0); // 2 players, full */
-/*   massert(arena3 != NULL); */
-/*   massert(arena3->players == 2); */
-/*   massert(arena3->first != NULL); */
-/*   // TODO stronger */
+  arena_t *arena3 = str_to_arena("2ASKH9C8D2STS", 0); // 2 players, partially full
+  massert(arena3 != NULL);
+  massert(arena3->players == 2);
+  massert(arena3->first != NULL);
+  // TODO stronger
 
-/*   return 0; */
+  return 0;
+}
 
 static char *all_tests() {
   run_test(test_play);
@@ -109,7 +131,7 @@ static char *all_tests() {
   run_test(test_card_to_str);
   run_test(test_card_encoding_identity);
   run_test(test_arena_to_str);
-  /* run_test(test_str_to_arena); */
+  run_test(test_str_to_arena);
   return 0;
 }
 

@@ -148,7 +148,29 @@ int okOn(card_t *c1, card_t *c2) {
          (c1->face + 1 == c2->face);
 }
 
+/******************************* STACKS *******************************/
 int isEmpty(stAck_t *stack) { return stack->top == NULL; }
+
+void push(card_t *card, stAck_t *stack) {
+  assert(card != NULL);
+  assert(stack != NULL);
+
+  card->below = stack->top;
+  stack->top = card;
+  card->stack = stack;
+}
+
+card_t *pop(stAck_t *stack) {
+  assert(stack != NULL);
+
+  card_t *card = stack->top;
+  stack->top = card->below;
+  card->below = NULL;
+  card->stack = NULL;
+  return card;
+}
+
+card_t *top(stAck_t *stack) { return stack->top; }
 
 /******************************* ENCODING *******************************/
 
@@ -211,7 +233,9 @@ char *arena_to_str(arena_t *arena) {
   while (current != NULL) {
     assert(current->stack != NULL);
     assert(current->stack->top != NULL);
+    printf("%s\n", arena_str);
     strcat(arena_str, card_to_str(current->stack->top));
+    current = current->next;
   }
   assert(arena_str != NULL);
   return arena_str;
@@ -224,15 +248,28 @@ arena_t *str_to_arena(char *arena_str, uint8_t player_id) {
   arena->players = (uint8_t)arena_str[0] - '0'; // ASCII char->int
   arena->lock = new_lock();
 
-  uint8_t arena_index = 0;
-  char current_char = arena_str[0];
-  arena_node_t *current = arena->first;
-  while (current_char != '\000') {
-    // construct the next node
+  // for each 2-length card description
+  for (uint8_t i = 1; i < strlen(arena_str); i = i + 2) {
     arena_node_t *new_node = malloc(sizeof(arena_node_t));
+
+    // extract the card string, convert it to a card
+    char *cardstr = malloc(4*sizeof(char));
+    sprintf(cardstr, "%c%c", arena_str[i], arena_str[i+1]);
+    card_t *card = str_to_card(cardstr);
+
+    // add a stack with that card on top
     new_node->stack = newStack(0);
-    // TODO: how do we do suits???
-    /* new_node->stack->top = char_to_card(current_char, ) */
+    push(card, new_node->stack);
+
+    // push it onto the arena
+    if (arena->first == NULL) // prepend
+      arena->first = new_node;
+    else { // append
+      arena_node_t *current = arena->first;
+      while (current->next != NULL)
+        current = current->next;
+      current->next = new_node;
+    }
   }
 
   return arena;
@@ -332,27 +369,6 @@ void putHelp(char *extra_message) {
 }
 
 /******************************* GAMEPLAY *******************************/
-
-void push(card_t *card, stAck_t *stack) {
-  assert(card != NULL);
-  assert(stack != NULL);
-
-  card->below = stack->top;
-  stack->top = card;
-  card->stack = stack;
-}
-
-card_t *pop(stAck_t *stack) {
-  assert(stack != NULL);
-
-  card_t *card = stack->top;
-  stack->top = card->below;
-  card->below = NULL;
-  card->stack = NULL;
-  return card;
-}
-
-card_t *top(stAck_t *stack) { return stack->top; }
 
 card_t *cardOf(char *c, solitaire_t *S) {
   int i;
@@ -527,6 +543,7 @@ bool play(card_t *card, arena_t *arena, solitaire_t *S) {
         pthread_mutex_unlock(arena->lock); // UNLOCK
         return true;
       }
+      current = current->next;
     }
   }
   pthread_mutex_unlock(arena->lock); // UNLOCK
