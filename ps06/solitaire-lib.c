@@ -323,6 +323,9 @@ void putArena(arena_t *arena) {
   printf("Number of players: %d\n", arena->players);
   arena_node_t *current = arena->first;
   while (current != NULL) {
+    if (current->stack == NULL)
+      continue;
+
     assert(current->stack != NULL);
     assert(current->stack->top != NULL);
     putColorOfSuit(current->stack->top->suit);
@@ -331,6 +334,10 @@ void putArena(arena_t *arena) {
     printf(": ");
     putStack(current->stack);
     printf("\n");
+
+    // continue onward
+    assert(current != current->next);
+    current = current->next;
   }
 }
 
@@ -517,7 +524,7 @@ bool play(card_t *card, arena_t *arena, solitaire_t *S) {
     // set up our new node
     arena_node_t *new_node = malloc(sizeof(arena_node_t));
     new_node->stack = newStack(0);
-    push(card, new_node->stack);
+    push(pop(card->stack), new_node->stack);
 
     if (current == NULL) { // insert at the front
       arena->first = new_node;
