@@ -171,13 +171,11 @@ static char *test_str_to_arena() {
   massert(arena2 != NULL);
   massert(arena2->players == 1);
   massert(arena2->first != NULL);
-  // TODO stronger
 
   arena_t *arena3 = str_to_arena("2ASKH9C8D2STS", 0); // 2 players, partially full
   massert(arena3 != NULL);
   massert(arena3->players == 2);
   massert(arena3->first != NULL);
-  // TODO stronger
 
   return 0;
 }

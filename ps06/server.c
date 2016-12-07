@@ -21,8 +21,6 @@
 #define MAXLINE 80
 #define CONNECTIONS 128
 
-// TODO global arena, seed
-
 typedef struct _client_t {
   int connection;
   uint8_t id;
@@ -43,12 +41,12 @@ char *respond(client_t *client, char *cmd, solitaire_t *solitaire) {
     return arena_to_str(client->arena);
 
   } else if (cmd[0] == 's') { // return client's seed
-    char *seedstr = malloc(80*sizeof(char)); // TODO: real upper bound?
+    char *seedstr = malloc(11*sizeof(char)); // log_10(LONG_MAX = 2147483647)+1
     sprintf(seedstr, "%lu", client->seed);
     return seedstr;
 
   } else if (cmd[0] == 'i') { // return client's id
-    char *idstr = malloc(80*sizeof(char)); // TODO: real upper bound?
+    char *idstr = malloc(4*sizeof(char)); // log_10(UINT8_MAX = 127)+1
     sprintf(idstr, "%d", client->id);
     return idstr;
 
@@ -125,8 +123,6 @@ void *play_with_client(void *ci) {
   pthread_mutex_unlock(client->arena->lock);
 
   close(client->connection);
-  /* if (client != NULL) free(client); */ // TODO: which of these works?
-  /* if (ci != NULL) free(ci); */
   return NULL;
 }
 
@@ -149,6 +145,10 @@ int main(int argc, char **argv) {
 
   // Build the service's info into a (struct sockaddr_in).
   int port = atoi(argv[1]); // TODO verify
+  if (port == 0) {
+    fprintf(stderr, "[ERROR] Invalid port '%s'\n", argv[1]);
+    return 1;
+  }
   struct sockaddr_in serveraddr;
   bzero((char *)&serveraddr, sizeof(struct sockaddr_in));
   serveraddr.sin_family = AF_INET;
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
   // Handle client sessions.
   while (1) {
     client_t *client = malloc(sizeof(client_t));
-    client->id = clients;
+    client->id = clients + 1; // client_id != 0, and can be parsed & verified
     client->arena = arena;
     clients++;
 
@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
     // set up seed to generate deck
     struct timeval tp;
     gettimeofday(&tp, NULL);
-    client->seed = tp.tv_sec;
+    client->seed = tp.tv_sec; // seed != 0, and can be parsed & verified
 
     // Accept a connection from a client, get a file descriptor for
     // communicating with the client.

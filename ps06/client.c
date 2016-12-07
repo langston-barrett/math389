@@ -80,7 +80,11 @@ int main(int argc, char **argv) {
   }
 
   // set up file descriptors
-  int port = atoi(argv[2]); // TODO: check if it's really an int
+  int port = atoi(argv[2]);
+  if (port == 0) {
+    fprintf(stderr, "[ERROR] Invalid port '%s'\n", argv[2]);
+    return 1;
+  }
   int client_fd = connect_to_server(argv[1], port);
 
   // set up client ID
@@ -89,8 +93,13 @@ int main(int argc, char **argv) {
     printf("[ERROR] No player ID given by the server.\n");
     return 1;
   }
-  uint8_t player_id = (uint8_t)atoi(idstr); // TODO verify
-  if (DEBUG) printf("[DEBUG] Got ID %d\n", player_id);
+  uint8_t player_id = (uint8_t)atoi(idstr);
+  if (player_id == 0) {
+    printf("[ERROR] Couldn't decode player_id '%s'\n", idstr);
+    return 1;
+  }
+  if (DEBUG)
+    printf("[DEBUG] Got ID %d\n", player_id);
 
   // get the seed so we have the same deck
   char *seedstr = return_service_requested(client_fd, "s");
@@ -98,7 +107,11 @@ int main(int argc, char **argv) {
     printf("[ERROR] No seed given by the server.\n");
     return 1;
   }
-  long seed = atol(seedstr); // TODO verify
+  long seed = atol(seedstr);
+  if (seed == 0) {
+    printf("[ERROR] Couldn't decode seed '%s'\n", seedstr);
+    return 1;
+  }
   if (DEBUG)
     printf("[DEBUG] Got seed %li\n", seed);
 
@@ -114,7 +127,8 @@ int main(int argc, char **argv) {
     arena = get_arena(client_fd, player_id);
 
     // print game state
-    if (arena->players > 0) putArena(arena);
+    if (arena->players > 0)
+      putArena(arena);
     putSolitaire(S);
 
     // get input
@@ -153,7 +167,8 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    if (DEBUG) printf("[DEBUG] Server replied with: %s\n", feedback);
+    if (DEBUG)
+      printf("[DEBUG] Server replied with: %s\n", feedback);
 
     if (strcmp(feedback, "success") != 0) { // report errors
       printf("[ERROR] Error message from server:\n\t%s\n", feedback);
@@ -163,7 +178,8 @@ int main(int argc, char **argv) {
 
       // sanity check
       if (error_string != NULL) {
-        printf("[ERROR] Server accepted invalid move. Updating arena and trying again.\n");
+        printf("[ERROR] Server accepted invalid move. Updating arena and "
+               "trying again.\n");
         arena = get_arena(client_fd, player_id);
         error_string = update(cmd, arena, S);
         if (error_string != NULL)
