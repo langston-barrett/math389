@@ -158,19 +158,24 @@ void push(card_t *card, stAck_t *stack) {
   card->below = stack->top;
   stack->top = card;
   card->stack = stack;
+
+  assert(card != NULL);
+  assert(stack != NULL);
 }
 
 card_t *pop(stAck_t *stack) {
   assert(stack != NULL);
+  assert(stack->top != NULL);
 
   card_t *card = stack->top;
   stack->top = card->below;
   card->below = NULL;
   card->stack = NULL;
+
+  assert(card != NULL);
+  assert(stack != NULL);
   return card;
 }
-
-card_t *top(stAck_t *stack) { return stack->top; }
 
 /******************************* ENCODING *******************************/
 
@@ -253,8 +258,8 @@ arena_t *str_to_arena(char *arena_str, uint8_t player_id) {
     arena_node_t *new_node = malloc(sizeof(arena_node_t));
 
     // extract the card string, convert it to a card
-    char *cardstr = malloc(4*sizeof(char));
-    sprintf(cardstr, "%c%c", arena_str[i], arena_str[i+1]);
+    char *cardstr = malloc(4 * sizeof(char));
+    sprintf(cardstr, "%c%c", arena_str[i], arena_str[i + 1]);
     card_t *card = str_to_card(cardstr);
 
     // add a stack with that card on top
@@ -323,9 +328,6 @@ void putArena(arena_t *arena) {
   printf("Number of players: %d\n", arena->players);
   arena_node_t *current = arena->first;
   while (current != NULL) {
-    if (current->stack == NULL)
-      continue;
-
     assert(current->stack != NULL);
     assert(current->stack->top != NULL);
     putColorOfSuit(current->stack->top->suit);
@@ -506,20 +508,37 @@ void maybeFlip(stAck_t *stack, solitaire_t *S) {
   }
 }
 
-bool play(card_t *card, arena_t *arena, solitaire_t *S) {
+// Can I play this card on that one in the arena?
+bool can_play_on(card_t *card, card_t *arena_card) {
+  assert(arena_card != NULL);
+  assert(card != NULL);
+  return (arena_card->suit == card->suit &&
+         (arena_card->face == card->face + 1 || // either it's one lower
+          (arena_card->face == 1 && card->face == 13))); // or it's ace/king pair
+}
+
+char *play(card_t *card, arena_t *arena, solitaire_t *S) {
   assert(card != NULL);
   assert(S != NULL);
   assert(card->stack != NULL);
   assert(arena != NULL);
   assert(arena->lock != NULL);
 
+  // validate all the stacks
+  arena_node_t *current = arena->first;
+  while (current != NULL) {
+    assert(current->stack != NULL);
+    assert(current->stack->top != NULL);
+    current = current->next;
+  }
+
   if (!isTop(card))
-    return false;
+    return "that card is not at the top of its stack";
 
   // we have to lock the arena for this bit
   pthread_mutex_lock(arena->lock); // LOCK
 
-  arena_node_t *current = arena->first;
+  current = arena->first;
   if (card->face == 1) { // if it's an ace, append it
     // set up our new node
     arena_node_t *new_node = malloc(sizeof(arena_node_t));
@@ -529,32 +548,37 @@ bool play(card_t *card, arena_t *arena, solitaire_t *S) {
     if (current == NULL) { // insert at the front
       arena->first = new_node;
       pthread_mutex_unlock(arena->lock); // UNLOCK
-      return true;
+      return NULL;
     }
     // insert at the end
     while (current->next != NULL)
       current = current->next;
     current->next = new_node;
     pthread_mutex_unlock(arena->lock); // UNLOCK
-    return true;
+    return NULL;
   } else { // otherwise, try and find a suitable stack to put it on
     while (current != NULL) {
-      assert(current->stack != NULL);
-      assert(current->stack->top != NULL);
-      card_t *ccard = current->stack->top;
+      card_t *stack_card = current->stack->top;
+
+      printf("card->suit: %d\n", card->suit);
+      printf("stack_card->suit: %d\n", stack_card->suit);
+      printf("card->face: %d\n", card->face);
+      printf("stack_card->face: %d\n", stack_card->face);
 
       // if we can actually lay it down...
-      if (ccard->suit == card->suit && ccard->face == card->face - 1) {
+      if (can_play_on(card, stack_card)) {
+        printf("in condition\n");
         push(pop(card->stack), current->stack);
         maybeFlip(card->stack, S);
         pthread_mutex_unlock(arena->lock); // UNLOCK
-        return true;
+        return NULL;
       }
       current = current->next;
     }
   }
+  printf("returning bad\n");
   pthread_mutex_unlock(arena->lock); // UNLOCK
-  return false;
+  return "couldn't find an appropriate stack";
 }
 
 void move(card_t *card, stAck_t *dest, solitaire_t *S) {
@@ -669,11 +693,7 @@ char *update(char *cmd, arena_t *A, solitaire_t *S) {
     card_t *card = cardOf(c1, S);
     assert(card != NULL); // card != null validated in validate_command
 
-    if (play(card, A, S)) {
-      return NULL;
-    } else {
-      return "that card was not played";
-    }
+    return play(card, A, S);
 
   } else if (cmd[0] == 'm') { // Move a card to some lain stack.
     sscanf(cmd, "%s %s %s", trash, c1, c2);
