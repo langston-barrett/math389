@@ -7,7 +7,9 @@ with import <nixpkgs> {}; stdenv.mkDerivation {
   name = "math389";
   src = null;
   buildInputs = [
+    alt-ergo # required for frama-c
     clang-tools # for clang-format
+    framac # formal verification :O
     gcc6
     gnumake42
   ];
