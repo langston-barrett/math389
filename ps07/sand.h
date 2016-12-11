@@ -1,9 +1,8 @@
-#ifndef _sand_h
-#define _sand_h
+#ifndef __sand_h
+#define __sand_h
+#include <stdbool.h>
 #include <stdint.h>
-typedef struct pile {
-  uint64_t **grid;
-  uint64_t rows;
-  uint64_t cols;
-} pile;
+#include "./sand-lib.gen.h"
+bool step(pile *src, pile *dst);
+pile *evolve(pile *src, bool print, bool color);
 #endif

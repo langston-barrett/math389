@@ -4,15 +4,18 @@
 # https://nixos.org/wiki/Development_Environments
 # http://nixos.org/nix/manual/#sec-nix-shell
 with import <nixpkgs> {}; stdenv.mkDerivation {
-  name = "math389";
+  name = "cache";
   src = null;
   buildInputs = [
-    alt-ergo # required for frama-c
-    clang
-    clang-tools # for clang-format
-    framac # formal verification :O
+    R
     gcc6
     gnumake42
-    valgrind # debugging
+    rPackages.codetools
+    rPackages.dplyr
+    rPackages.ggplot2
+    rPackages.knitr
+    pythonPackages.pygments # latex package minted
+    texlive.combined.scheme-full # lualatex, etc.
+    zsh
   ];
 }

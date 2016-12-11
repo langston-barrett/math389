@@ -3,10 +3,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "./sand.h"
 #include "./tsand.h"
 #include "./sand-lib.gen.h"
 
+#define COLOR true
 const uint8_t MAX_HEIGHT = 4;
 
 // just parse the command line args.
@@ -30,12 +30,7 @@ int main(int argc, char **argv) {
   uint64_t center = parse_arg(argv[3], false, "center height");
   pile *pile = new_pile(rows, cols, center, MAX_HEIGHT);
 
-  #ifdef THREADS
-  print_pile(tevolve(pile), true);
-  #endif
-  #ifndef THREADS
-  print_pile(evolve(pile, true, true), true);
-  #endif
+  print_pile(tevolve(pile), COLOR);
 
   return 0;
 }

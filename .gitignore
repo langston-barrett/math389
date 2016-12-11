@@ -9,6 +9,9 @@
 # example files from jim
 **/examples/*
 
+# LLVM bytecode
+*.bc
+
 ########################### C
 
 # Object files

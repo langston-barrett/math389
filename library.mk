@@ -50,5 +50,10 @@ endef
 clean:
 	rm -f a.out
 	rm -f *.o
+	rm -f *.bc
 	rm -f *.gen.h
 	rm -f *.aux *.fdb_latexmk *.fls *.log *.out *.synctex.gz
+	rm -f klee-last
+	rm -rf klee-out-*
+	rm -rf klee-out-*
+	find . -type f -executable -delete
