@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "./sand-lib.gen.h"
+#include "./sand.h"
+#include "./sand-lib.h"
 
 #define SLEEP 100000
 

@@ -12,6 +12,9 @@
 # LLVM bytecode
 *.bc
 
+# clang-generated
+*.plist
+
 ########################### C
 
 # Object files

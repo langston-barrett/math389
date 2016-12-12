@@ -6,14 +6,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "./tsand.h"
-#include "./sand-lib.gen.h"
+#include "./sand-lib.h"
 
-#define SLEEP 1000
 #define THREADS 4
 #define DEBUG 0
-#define PRINTING 0
 
-barrier_ *new_barrier(uint8_t threads) {
+static barrier_ *new_barrier(uint8_t threads) {
   barrier_ *barrier = malloc(sizeof(barrier_));
   assert(barrier != NULL);
   barrier->total = threads;
@@ -21,23 +19,27 @@ barrier_ *new_barrier(uint8_t threads) {
   barrier->done = 0;
 
   // lock
-  pthread_mutex_t *lock = malloc(sizeof(pthread_mutex_t));
-  assert(lock != NULL);
-  assert(pthread_mutex_init(lock, NULL) == 0);
-  barrier->lock = lock;
+  barrier->lock = malloc(sizeof(pthread_mutex_t));
+  assert(barrier->lock != NULL);
+  assert(pthread_mutex_init(barrier->lock, NULL) == 0);
   assert(barrier->lock != NULL);
 
   // condition variable
-  pthread_cond_t *cond = malloc(sizeof(pthread_cond_t));
-  assert(cond != NULL);
-  assert(pthread_cond_init(cond, NULL) == 0);
-  barrier->cond = cond;
+  barrier->cond = malloc(sizeof(pthread_cond_t));
+  assert(barrier->cond != NULL);
+  assert(pthread_cond_init(barrier->cond, NULL) == 0);
   assert(barrier->cond != NULL);
 
   return barrier;
 }
 
-void barrier_wait(uint8_t id, barrier_ *barrier, bool done, pile_ *dst, pile_ **fin) {
+static void __attribute__((nonnull))
+barrier_wait(uint8_t id, barrier_ *barrier, bool done, pile_ *dst,
+             pile_ **fin) {
+  assert(barrier != NULL);
+  assert(dst != NULL);
+  assert(fin != NULL);
+
   if (DEBUG)
     printf("thread %d: in barrier_wait\n", id);
   pthread_mutex_lock(barrier->lock);
@@ -75,10 +77,11 @@ void barrier_wait(uint8_t id, barrier_ *barrier, bool done, pile_ *dst, pile_ **
 
   if (DEBUG)
     printf("thread %d: unlocked the mutex\n", id);
+
   pthread_mutex_unlock(barrier->lock);
 }
 
-void *work(void *thread_arg) {
+static void __attribute__((nonnull)) *work(void *thread_arg) {
   thread_args *arg = (thread_args *)thread_arg;
   assert(arg->src != NULL);
   assert(arg->src->grid != NULL);
@@ -125,8 +128,7 @@ void *work(void *thread_arg) {
     printf("thread %d: col_end: %d\n", arg->id, col_end);
     for (uint16_t i = 0; i < arg->src->rows; i++) {
       for (uint16_t j = 0; j < arg->src->cols; j++) {
-        if (i >= row_beg && i < row_end &&
-            j >= col_beg && j < col_end)
+        if (i >= row_beg && i < row_end && j >= col_beg && j < col_end)
           printf("X");
         else
           printf("O");
@@ -192,7 +194,6 @@ pile_ *tevolve(pile_ *src) {
       printf("main thread: waiting on %d\n", i);
     assert(pthread_join(threads[i], NULL) == 0);
   }
-
 
   if (DEBUG)
     fputs("main thread: returning\n", stdout);

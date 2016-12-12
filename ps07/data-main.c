@@ -8,7 +8,7 @@
 #include "../ps05/cache/csv.gen.h"
 #include "./sand.h"
 #include "./tsand.h"
-#include "./sand-lib.gen.h"
+#include "./sand-lib.h"
 
 #define SIZE_LOWER_BOUND 1000
 #define SIZE_UPPER_BOUND 10000
@@ -17,7 +17,7 @@
 #define HEIGHT_UPPER_BOUND 3000
 #define HEIGHT_STEP 1000
 
-const uint8_t MAX_HEIGHT = 4;
+#define MAX_HEIGHT 4
 
 char *mycsv(bool *threaded, uint64_t *size, uint64_t *height, clock_t *time,
             int64_t length) {

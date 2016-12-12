@@ -1,8 +1,9 @@
 # Shared functions for use in sub-makefiles
 
-.DEFAULT_GOAL := all
+export CC ?= clang
+export CFLAGS ?= -g -Qunused-arguments -Werror -std=gnu11
 
-.PHONY: all
+.DEFAULT_GOAL := all
 all: build test clean
 
 # Generate header file for functions
@@ -18,12 +19,6 @@ endef
 define build-main =
 $(1): $(1).gen.h $(1).o $(1)-main.o $(DEPS);
 	$(CC) $(CFLAGS) -lm $(1).o $(1)-main.o
-endef
-
-# Build a binary with some extra files
-define build-main-2 =
-$(1): $(2).gen.h $(2).o $(1).gen.h $(1).o $(1)-main.o $(DEPS);
-	$(CC) $(CFLAGS) -lm $(1).o $(1)-main.o $(2).o
 endef
 
 # Build a test binary from <name>.o <name>-test.o and <name>.gen.h
@@ -42,7 +37,12 @@ $(1)-test: $(2).gen.h $(2).o $(1).gen.h $(1).o $(1)-test.o $(DEPS);
 	rm a.out
 endef
 
-# Generic clean
+############################ Static Analysis ############################
+# https://developer.mozilla.org/en-US/docs/Mozilla/Testing/Clang_static_analysis
+clang:
+	find . -type f -name "*.c" -exec $(CC) $(CFLAGS) --analyze {} \;
+
+############################ Clean ############################
 .PHONY: clean
 clean:
 	rm -f a.out

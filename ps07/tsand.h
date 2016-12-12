@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "./sand-lib.gen.h"
+#include "./sand-lib.h"
 
 pile_ *tevolve(pile_ *src);
 

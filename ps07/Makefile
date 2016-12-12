@@ -1,7 +1,6 @@
 include ../library.mk
 
-export CC ?= clang
-export CFLAGS ?= -g -pthread -Werror -Weverything -std=gnu11 -Qunused-arguments
+export CFLAGS := -g -pthread -Werror -Weverything -std=gnu11 -Qunused-arguments
 KLEE_VERSION := 1.2.0
 KLEE_MAX_MEM := 2048
 
@@ -12,12 +11,10 @@ KLEE_MAX_MEM := 2048
 %.gen.h: %.c ../makeheaders.sh $(DEPS)
 	bash ../makeheaders.sh $<;
 
-.PHONY: build
+############################ Binaries ############################
 build: sand tsand
 
-############################ Binaries ############################
-
-sand-lib: sand-lib.h sand-lib.gen.h sand-lib.o
+sand-lib: sand-lib.h sand-lib.o
 	$(CC) $(CFLAGS) -c sand-lib.c;
 
 sand: sand-lib sand.h sand.o sand-main.o
@@ -27,13 +24,27 @@ tsand: sand tsand.o
 	$(CC) $(CFLAGS) -DTHREADS -o tsand -lm sand-main.o sand.o tsand.o sand-lib.o
 
 ############################ Tests ############################
+# All tests will also Valgrind the test binaries.
+# http://valgrind.org/docs/manual/quick-start.html
+TMP := $(shell mktemp)
 test: sand-lib-test sand-test
 
+define valgrind =
+	valgrind --tool=$(2) $(1) &> $(TMP) || (cat $(TMP); exit 1);
+	grep -q "ERROR SUMMARY: 0 errors" $(TMP) || (cat $(TMP); exit 1);
+endef
+
 sand-lib-test: sand-lib sand-lib-test.o
-	$(CC) $(CFLAGS) -o test-lib -lm sand-lib-test.o sand-lib.o
+	$(CC) $(CFLAGS) -o test-lib -lm sand-lib-test.o sand-lib.o;
+	$(call valgrind,./test-lib,memcheck)
 
 sand-test: sand tsand sand-test.o
-	$(CC) $(CFLAGS) -o test -lm sand-test.o sand.o tsand.o sand-lib.o
+	$(CC) $(CFLAGS) -o test -lm sand-test.o sand.o tsand.o sand-lib.o;
+	$(call valgrind,./test,memcheck)
+
+# Test for threading errors. Not very helpful right now.
+sand-test-thread: sand-test
+	$(call valgrind,./test,drd)
 
 ############################ Release/Analysis ############################
 csv: ../ps05/cache/csv.gen.h
@@ -49,13 +60,8 @@ data: data-main
 
 ############################ Static Analysis ############################
 
-
 %.bc: %.c $(DEPS)
 	clang -I/home/klee/klee_src/include -emit-llvm -g -c $<;
-
-# https://developer.mozilla.org/en-US/docs/Mozilla/Testing/Clang_static_analysis
-clang:
-  find . -type f -name "*.c" -exec $(CC) $(CFLAGS) --analyze {} +
 
 klee-sand: sand sand-lib.bc sand.bc sand-klee-main.bc
 	llvm-link -o klee.bc sand-klee-main.bc sand-lib.bc sand.bc
@@ -71,8 +77,3 @@ klee:
 	sudo docker run -v "$(PWD)/../:/data:z" --rm -ti --ulimit='stack=-1:-1' \
     "klee/klee:$(KLEE_VERSION)" \
     /bin/bash -li -c "make -C /data/ps07 klee-sand"
-
-# http://valgrind.org/docs/manual/quick-start.html
-valgrind: test
-	valgrind ./test-lib
-	valgrind ./test

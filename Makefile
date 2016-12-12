@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := all
+include library.mk
 
 PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 
@@ -6,11 +6,8 @@ PROBLEM_SETS := $(shell find . -maxdepth 1 -type d -name "ps*")
 NIX_SHELL := $(shell command -v nix-shell 2> /dev/null)
 SUBMAKE := $(MAKE) -e -C $$$$ps $(1) || exit 1
 ifdef NIX_SHELL
-SUBMAKE := nix-shell --command "$(SUBMAKE)"
+SUBMAKE := nix-shell --run "$(SUBMAKE)"
 endif
-
-export CC ?= clang
-export CFLAGS ?= -g -Qunused-arguments -Werror -std=gnu11
 
 # This function calls `make` in each subdirectory of the form ps* using the
 # provided command, and passing down variables from this instance.

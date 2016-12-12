@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "./sand.h"
-#include "./sand-lib.gen.h"
+#include "./sand-lib.h"
 
 void test_evolve() {
   printf("[INFO] testing evolve\n");

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../minunit.h"
-#include "./sand-lib.gen.h"
+#include "./sand-lib.h"
 
 static uint64_t tests_run = 0;
 static uint64_t tests_failed = 0;
