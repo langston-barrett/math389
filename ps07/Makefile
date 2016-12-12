@@ -1,13 +1,12 @@
 include ../library.mk
 
 export CC ?= clang
-export CFLAGS ?= -g -pthread -Werror -Weverything -std=gnu11
+export CFLAGS ?= -g -pthread -Werror -Weverything -std=gnu11 -Qunused-arguments
 KLEE_VERSION := 1.2.0
 KLEE_MAX_MEM := 2048
 
 ############################ Setup ############################ 
 %.o: %.c $(DEPS)
-	# $(CC) $(CFLAGS) --analyze $<;
 	$(CC) $(CFLAGS) -c $<;
 
 %.gen.h: %.c ../makeheaders.sh $(DEPS)
@@ -50,15 +49,13 @@ data: data-main
 
 ############################ Static Analysis ############################
 
+
 %.bc: %.c $(DEPS)
 	clang -I/home/klee/klee_src/include -emit-llvm -g -c $<;
 
-.PHONY: frama-c
-frama-c:
-	frama-c -wp sand-lib.c
-.PHONY: frama-c-gui
-frama-c-gui:
-	frama-c-gui -wp sand-lib.c
+# https://developer.mozilla.org/en-US/docs/Mozilla/Testing/Clang_static_analysis
+clang:
+  find . -type f -name "*.c" -exec $(CC) $(CFLAGS) --analyze {} +
 
 klee-sand: sand sand-lib.bc sand.bc sand-klee-main.bc
 	llvm-link -o klee.bc sand-klee-main.bc sand-lib.bc sand.bc
@@ -75,3 +72,7 @@ klee:
     "klee/klee:$(KLEE_VERSION)" \
     /bin/bash -li -c "make -C /data/ps07 klee-sand"
 
+# http://valgrind.org/docs/manual/quick-start.html
+valgrind: test
+	valgrind ./test-lib
+	valgrind ./test

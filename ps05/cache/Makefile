@@ -8,11 +8,10 @@ all: build test clean
 %.gen.h: %.c ../../makeheaders.sh $(DEPS)
 	bash ../../makeheaders.sh $<;
 
-build: cache-size.gen.h cache-size.o csv.gen.h csv.o random-array.gen.h random-array.o main.o 
+build: cache-penalty.gen.h random-array.gen.h cache-size.gen.h csv.gen.h cache-size.o csv.o random-array.o main
 	$(CC) $(CFLAGS) -g -o cache -lm cache-size.o csv.o random-array.o main.o
 
 analysis: build
-	#nix-shell .
 	[[ -f cache-size-data.csv ]] || ./cache
 	R --no-save --no-restore -e "require(knitr); knit('analysis.Rtex')"
 	lualatex -shell-escape analysis.tex

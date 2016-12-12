@@ -29,9 +29,7 @@ static char *test_mod() {
   // note - C's mod handles negative values incorrectly.
   for (int64_t i = -1000; i < 1000; i++) {
     for (int64_t j = 1; j < 10; j++) {
-      /* printf("i: %d\n", i); */
-      /* printf("j: %d\n", j); */
-      assert_int64_eq(abs(i % j), mod(i, j));
+      assert_int64_eq(labs(i % j), mod(i, j));
     }
   }
   return 0;

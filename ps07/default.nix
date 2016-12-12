@@ -10,9 +10,7 @@ with import <nixpkgs> {}; stdenv.mkDerivation {
     export CC=clang
   '';
   buildInputs = [
-    alt-ergo # required for frama-c
     clang
-    framac # formal verification :O
     R
     gnumake42
     rPackages.codetools
