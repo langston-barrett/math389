@@ -1,12 +1,13 @@
 include ../library.mk
 
-CFLAGS := -g -pthread
+export CC ?= clang
+export CFLAGS ?= -g -pthread -Werror -Weverything -std=gnu11
 KLEE_VERSION := 1.2.0
 KLEE_MAX_MEM := 2048
 
-############################ Setup ############################
-
+############################ Setup ############################ 
 %.o: %.c $(DEPS)
+	# $(CC) $(CFLAGS) --analyze $<;
 	$(CC) $(CFLAGS) -c $<;
 
 %.gen.h: %.c ../makeheaders.sh $(DEPS)
@@ -39,7 +40,7 @@ sand-test: sand tsand sand-test.o
 csv: ../ps05/cache/csv.gen.h
 	$(CC) $(CFLAGS) -o ../ps05/cache/csv.o -c ../ps05/cache/csv.c
 
-data-main: csv tsand data-main.o
+data-main: csv sand-lib tsand data-main.o
 	$(CC) $(CFLAGS) -o data -lm data-main.o sand.o tsand.o sand-lib.o ../ps05/cache/csv.o
 
 data: data-main
@@ -54,16 +55,19 @@ data: data-main
 
 .PHONY: frama-c
 frama-c:
-	frama-c -wp sand-lib.h sand.c sand-main.c
+	frama-c -wp sand-lib.c
+.PHONY: frama-c-gui
+frama-c-gui:
+	frama-c-gui -wp sand-lib.c
 
-klee-sand: sand-klee-main.bc sand-lib.bc sand.bc
+klee-sand: sand sand-lib.bc sand.bc sand-klee-main.bc
 	llvm-link -o klee.bc sand-klee-main.bc sand-lib.bc sand.bc
-	klee --emit-all-errors --max-memory $(KLEE_MAX_MEM) --optimize --libc=uclibc --posix-runtime klee.bc
-	#klee --max-memory $(KLEE_MAX_MEM) --optimize --libc=uclibc --posix-runtime klee.bc
+	klee --allow-external-sym-calls --max-memory $(KLEE_MAX_MEM) --optimize --libc=uclibc --posix-runtime klee.bc --max-fail 0
+	ktest-tool --write-ints klee-last/*.ktest
 
 klee-shell:
 	sudo docker run -v "$(PWD)/../:/data:z" --rm -ti --ulimit='stack=-1:-1' \
-    "klee/klee:$(KLEE_VERSION)"
+    "klee/klee:$(KLEE_VERSION)" /bin/bash -c "cd /data/ps07; exec bash"
 
 klee:
 	sudo docker pull "klee/klee:$(KLEE_VERSION)"

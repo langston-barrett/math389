@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,20 +11,18 @@
 #define GREEN "\x1b[32m"
 #define YELLOW "\x1b[33m"
 #define BLUE "\x1b[34m"
-#define MAGENTA "\x1b[35m"
-#define CYAN "\x1b[36m"
 #define RESET "\x1b[0m"
 
 /*@ requires c >= 48 && c <= 57;
   @ assigns \nothing;
   @ ensures \result < 10;
 */
-uint8_t char_to_int(char c) { return c - '0'; }
+uint8_t char_to_int(char c) { return (uint8_t) c - '0'; }
 /*@ requires i < 10;
   @ assigns \nothing;
   @ ensures \result >= 48 && \result <= 57;
 */
-char int_to_char(uint8_t i) { return i + '0'; }
+char int_to_char(uint8_t i) { return (char)i + '0'; }
 
 // can't ensure postconditions on code that calls stdlib functions
 /*@ requires \valid(color) && \valid(text); */
@@ -49,7 +46,7 @@ char *maybe_colorize(char *color, char *str, bool really) {
   @ assigns \nothing;
   @ ensures \valid(\result);
 */
-char *pile_to_string(pile *pile, bool color) {
+char *pile_to_string(pile_ *pile, bool color) {
   char *str = malloc((10*pile->rows*pile->cols)*sizeof(char));
   assert(str != NULL); // make sure we've got memory
   str[0] = '\000'; // zero it
@@ -57,11 +54,11 @@ char *pile_to_string(pile *pile, bool color) {
   /*@ loop invariant 0 <= i <= pile->rows;
     @ loop invariant \valid(pile) && \valid(pile->grid);
   */
-  for (uint64_t i = 0; i < pile->rows; i++) {
+  for (uint16_t i = 0; i < pile->rows; i++) {
     /*@ loop invariant 0 <= j <= pile->cols;
       @ loop invariant \valid(pile) && \valid(pile->grid);
     */
-    for (uint64_t j = 0; j < pile->cols; j++) {
+    for (uint16_t j = 0; j < pile->cols; j++) {
       switch (pile->grid[i][j]) {
       case 0:
         strcat(str, maybe_colorize(RESET, "0", color));
@@ -79,7 +76,8 @@ char *pile_to_string(pile *pile, bool color) {
       if (pile->grid[i][j] > 3) {
         if (pile->grid[i][j] < 10) {
           char *char_str = malloc(2*sizeof(char));
-          char_str[0] = int_to_char(pile->grid[i][j]);
+          // we know it's a uint8_t because it's < 10
+          char_str[0] = int_to_char((uint8_t)pile->grid[i][j]);
           char_str[1] = '\000';
           strcat(str, maybe_colorize(RED, char_str, color));
           free(char_str);
@@ -96,17 +94,21 @@ char *pile_to_string(pile *pile, bool color) {
 /*@ requires \valid(pile) && \valid(pile->grid);
   @ ensures \valid(pile) && \valid(pile->grid);
  */
-void print_pile(pile *pile, bool color) {
+void print_pile(pile_ *pile, bool color) {
   printf("\033[2J\033[1;1H"); // clear the screen
-  printf("%s", pile_to_string(pile, color));
+  char *str = pile_to_string(pile, color);
+  printf("%s", str);
+  free(str);
 }
 
-pile *new_pile(uint64_t rows, uint64_t cols, uint64_t center, uint64_t max) {
+/* @ ensures \valid(\result);
+*/
+pile_ *new_pile(uint16_t rows, uint16_t cols, uint16_t center, uint16_t max) {
   assert(rows > 0);
   assert(cols > 0);
   assert(max % 4 == 0);
 
-  pile *pile = malloc(sizeof(pile));
+  pile_ *pile = malloc(sizeof(pile_));
   assert(pile != NULL);
 
   pile->rows = rows;
@@ -114,17 +116,22 @@ pile *new_pile(uint64_t rows, uint64_t cols, uint64_t center, uint64_t max) {
   pile->max = max;
 
   // allocate the grid
-  pile->grid = malloc(rows * sizeof(uint64_t));
-  for (uint64_t i = 0; i < rows; i++) {
-    pile->grid[i] = malloc(cols * sizeof(uint64_t));
-    /* assert(pile->grid[i] != NULL); // make sure we have the memory */
-    for (uint64_t j = 0; j < cols; j++) { // zero it out
+  pile->grid = malloc(rows * sizeof(uint16_t *));
+  /*@ loop invariant 0 <= i <= rows;
+    @ loop invariant \valid(pile) && \valid(pile->grid) && \valid(pile->grid[i]);
+  */
+  for (uint16_t i = 0; i < rows; i++) {
+    pile->grid[i] = malloc(cols * sizeof(uint16_t));
+    /*@ loop invariant 0 <= j <= cols;
+      @ loop invariant \valid(pile) && \valid(pile->grid);
+    */
+    for (uint16_t j = 0; j < cols; j++) { // zero it out
       pile->grid[i][j] = 0;
     }
   }
 
-  uint64_t center_row = rows / 2;
-  uint64_t center_col = cols / 2;
+  uint16_t center_row = rows / 2;
+  uint16_t center_col = cols / 2;
   pile->grid[center_row][center_col] = center;
 
   return pile;
@@ -137,7 +144,7 @@ pile *new_pile(uint64_t rows, uint64_t cols, uint64_t center, uint64_t max) {
   @ assigns dst->grid[row][col];
   @ ensures \valid(src) && \valid(src->grid) && \valid(dst) && \valid(dst->grid);
  */
-bool step_square(pile *src, pile *dst, uint64_t row, uint64_t col) {
+bool step_square(pile_ *src, pile_ *dst, uint16_t row, uint16_t col) {
   if (src->grid[row][col] >= src->max)
     dst->grid[row][col] = src->grid[row][col] - src->max;
   else
@@ -159,7 +166,11 @@ bool step_square(pile *src, pile *dst, uint64_t row, uint64_t col) {
 }
 
 // returns whether or not this region is now settled
-bool step_region(pile *src, pile *dst, uint64_t row_beg, uint64_t row_end, uint64_t col_beg, uint64_t col_end) {
+/*@ requires \valid(src) && \valid(src->grid) && \valid(dst) && \valid(dst->grid);
+  @ requires row_end <= src->rows && col_end <= src->cols;
+  @ ensures \valid(src) && \valid(src->grid) && \valid(dst) && \valid(dst->grid);
+*/
+bool step_region(pile_ *src, pile_ *dst, uint16_t row_beg, uint16_t row_end, uint16_t col_beg, uint16_t col_end) {
   assert(src != NULL);
   assert(src->grid != NULL);
   assert(dst != NULL);
@@ -168,13 +179,10 @@ bool step_region(pile *src, pile *dst, uint64_t row_beg, uint64_t row_end, uint6
   assert(col_end <= src->cols);
 
   bool done = true;
-  for (uint64_t i = row_beg; i < row_end; i++) {
-    for (uint64_t j = col_beg; j < col_end; j++) {
-      if (!step_square(src, dst, i, j)) {
+  for (uint16_t i = row_beg; i < row_end; i++)
+    for (uint16_t j = col_beg; j < col_end; j++)
+      if (!step_square(src, dst, i, j))
         done = false;
-      }
-    }
-  }
 
   assert(src != NULL);
   assert(src->grid != NULL);

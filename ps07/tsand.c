@@ -13,11 +13,12 @@
 #define DEBUG 0
 #define PRINTING 0
 
-barrier *new_barrier(uint8_t threads) {
-  barrier *barrier = malloc(sizeof(barrier));
+barrier_ *new_barrier(uint8_t threads) {
+  barrier_ *barrier = malloc(sizeof(barrier_));
   assert(barrier != NULL);
   barrier->total = threads;
   barrier->here = 0;
+  barrier->done = 0;
 
   // lock
   pthread_mutex_t *lock = malloc(sizeof(pthread_mutex_t));
@@ -36,7 +37,7 @@ barrier *new_barrier(uint8_t threads) {
   return barrier;
 }
 
-void barrier_wait(uint8_t id, barrier *barrier, bool done, pile *dst, pile **fin) {
+void barrier_wait(uint8_t id, barrier_ *barrier, bool done, pile_ *dst, pile_ **fin) {
   if (DEBUG)
     printf("thread %d: in barrier_wait\n", id);
   pthread_mutex_lock(barrier->lock);
@@ -85,10 +86,10 @@ void *work(void *thread_arg) {
   assert(arg->dst->grid != NULL);
 
   // divvy up the grid into four quarters
-  uint64_t row_beg = 0;
-  uint64_t row_end = 0;
-  uint64_t col_beg = 0;
-  uint64_t col_end = 0;
+  uint16_t row_beg = 0;
+  uint16_t row_end = 0;
+  uint16_t col_beg = 0;
+  uint16_t col_end = 0;
   // TODO: refactor for a 1D array
   switch (arg->id) {
   case 1: // quadrant I
@@ -118,12 +119,12 @@ void *work(void *thread_arg) {
   }
 
   if (DEBUG) {
-    printf("thread %d: row_beg: %lu\n", arg->id, row_beg);
-    printf("thread %d: row_end: %lu\n", arg->id, row_end);
-    printf("thread %d: col_beg: %lu\n", arg->id, col_beg);
-    printf("thread %d: col_end: %lu\n", arg->id, col_end);
-    for (uint64_t i = 0; i < arg->src->rows; i++) {
-      for (uint64_t j = 0; j < arg->src->cols; j++) {
+    printf("thread %d: row_beg: %d\n", arg->id, row_beg);
+    printf("thread %d: row_end: %d\n", arg->id, row_end);
+    printf("thread %d: col_beg: %d\n", arg->id, col_beg);
+    printf("thread %d: col_end: %d\n", arg->id, col_end);
+    for (uint16_t i = 0; i < arg->src->rows; i++) {
+      for (uint16_t j = 0; j < arg->src->cols; j++) {
         if (i >= row_beg && i < row_end &&
             j >= col_beg && j < col_end)
           printf("X");
@@ -140,17 +141,20 @@ void *work(void *thread_arg) {
 
     barrier_wait(arg->id, arg->barrier, done, arg->dst, arg->fin);
 
-    pile *tmp = arg->src; // switch src and dst
+    pile_ *tmp = arg->src; // switch src and dst
     arg->src = arg->dst;
     arg->dst = tmp;
   }
+
+  free(arg);
+
   if (DEBUG)
     printf("thread %d: done, exiting\n", arg->id);
   pthread_exit(NULL);
 }
 
 // take a pile forward until it settles. printing optional. color optional.
-pile *tevolve(pile *src) {
+pile_ *tevolve(pile_ *src) {
   assert(src != NULL);
   assert(src->grid != NULL);
   assert(src->max % 4 == 0);
@@ -158,15 +162,15 @@ pile *tevolve(pile *src) {
   assert(src->cols > THREADS);
 
   // we'll synchronously switch between data in this pile and the other
-  pile *dst = new_pile(src->rows, src->cols, 1, src->max);
+  pile_ *dst = new_pile(src->rows, src->cols, 1, src->max);
   assert(dst != NULL); // make sure we have the memory
 
   // this pile will hold the return value of the threads
-  pile **fin = malloc(sizeof(pile *));
+  pile_ **fin = malloc(sizeof(pile_ *));
   assert(fin != NULL); // make sure we have the memory
 
   // init a barrier
-  barrier *barrier = new_barrier(THREADS);
+  barrier_ *barrier = new_barrier(THREADS);
 
   // spin up threads
   pthread_t threads[THREADS];
@@ -189,8 +193,11 @@ pile *tevolve(pile *src) {
     assert(pthread_join(threads[i], NULL) == 0);
   }
 
+
   if (DEBUG)
     fputs("main thread: returning\n", stdout);
+
+  free(barrier);
 
   assert(src != NULL);
   assert(src->grid != NULL);

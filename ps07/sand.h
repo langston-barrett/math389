@@ -1,8 +1,8 @@
-#ifndef __sand_h
-#define __sand_h
+#ifndef _sand_h
+#define _sand_h
 #include <stdbool.h>
 #include <stdint.h>
 #include "./sand-lib.gen.h"
-bool step(pile *src, pile *dst);
-pile *evolve(pile *src, bool print, bool color);
+bool step(pile_ *src, pile_ *dst);
+pile_ *evolve(pile_ *src, bool print, bool color);
 #endif

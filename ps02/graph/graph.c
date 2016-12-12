@@ -4,22 +4,6 @@
 #include "myMath.h"
 #include "charLines.h"
 
-// To compile:
-//
-//   gcc -c myMath.c
-//   gcc -c charLines.c
-//   gcc -c graph.c
-//   gcc -o graph -lm myMath.o charLines.o graph.o
-//
-// or just
-//
-//   gcc -o graph graph.c charLines.c myMath.c -lm
-//
-// or just
-//
-//   make graph
-//
-
 double xscale = 3.14159;
 double yscale = 1.2;
 int height = 20;

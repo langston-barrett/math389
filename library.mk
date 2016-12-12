@@ -5,9 +5,6 @@
 .PHONY: all
 all: build test clean
 
-# %.o: %.c
-# 	gcc -c -o $@ $<
-
 # Generate header file for functions
 %.gen.h: %.c ../makeheaders.sh $(DEPS)
 	bash ../makeheaders.sh $<;
@@ -51,9 +48,10 @@ clean:
 	rm -f a.out
 	rm -f *.o
 	rm -f *.bc
+	rm -f *.plist
 	rm -f *.gen.h
 	rm -f *.aux *.fdb_latexmk *.fls *.log *.out *.synctex.gz
+	rm -f *.png
 	rm -f klee-last
-	rm -rf klee-out-*
 	rm -rf klee-out-*
 	find . -type f -executable -delete

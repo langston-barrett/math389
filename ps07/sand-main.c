@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   uint64_t rows = parse_arg(argv[1], true, "number of rows");
   uint64_t cols = parse_arg(argv[2], true, "number of columns");
   uint64_t center = parse_arg(argv[3], false, "center height");
-  pile *pile = new_pile(rows, cols, center, MAX_HEIGHT);
+  pile_ *pile = new_pile(rows, cols, center, MAX_HEIGHT);
 
   #ifdef THREADS
   print_pile(tevolve(pile), true);

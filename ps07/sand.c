@@ -7,18 +7,18 @@
 
 #define SLEEP 100000
 
-bool step(pile *src, pile *dst) {
+bool step(pile_ *src, pile_ *dst) {
   return step_region(src, dst, 0, src->rows, 0, src->cols);
 }
 
 // take a pile forward until it settles. printing optional. color optional.
-pile *evolve(pile *src, bool print, bool color) {
+pile_ *evolve(pile_ *src, bool print, bool color) {
   assert(src != NULL);
   assert(src->grid != NULL);
   assert(src->max % 4 == 0);
 
   // we'll synchronously switch between data in this pile and the other
-  pile *dst = new_pile(src->rows, src->cols, 1, src->max);
+  pile_ *dst = new_pile(src->rows, src->cols, 1, src->max);
   assert(dst != NULL); // make sure we have the memory
 
   while (!step(src, dst)) { // while we're still going
@@ -27,7 +27,7 @@ pile *evolve(pile *src, bool print, bool color) {
       usleep(SLEEP);
     }
 
-    pile *tmp = src; // switch src and dst
+    pile_ *tmp = src; // switch src and dst
     src = dst;
     dst = tmp;
   }

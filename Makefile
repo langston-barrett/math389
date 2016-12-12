@@ -9,7 +9,8 @@ ifdef NIX_SHELL
 SUBMAKE := nix-shell --command "$(SUBMAKE)"
 endif
 
-export CFLAGS?=-std=gnu11
+export CC ?= clang
+export CFLAGS ?= -g -pthread -Werror -Weverything -std=gnu11
 
 # This function calls `make` in each subdirectory of the form ps* using the
 # provided command, and passing down variables from this instance.

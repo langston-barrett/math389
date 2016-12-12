@@ -6,9 +6,12 @@
 with import <nixpkgs> {}; stdenv.mkDerivation {
   name = "cache";
   src = null;
+  shellHook = ''
+    export CC=clang
+  '';
   buildInputs = [
+    clang
     R
-    gcc6
     gnumake42
     rPackages.dplyr
     rPackages.ggplot2
