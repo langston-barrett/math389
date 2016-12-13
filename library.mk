@@ -1,7 +1,7 @@
 # Shared functions for use in sub-makefiles
 
 export CC ?= clang
-export CFLAGS ?= -g -Qunused-arguments -Werror -std=gnu11
+export CFLAGS ?= -Qunused-arguments -Werror -std=gnu11
 
 .DEFAULT_GOAL := all
 all: build test clean
@@ -25,7 +25,7 @@ endef
 define test =
 $(1)-test: $(1).gen.h $(1).o $(1)-test.o $(DEPS);
 	$(CC) $(CFLAGS) -lm $(1).o $(1)-test.o
-	./a.out
+	./a.out || exit 1
 	rm a.out
 endef
 
@@ -33,7 +33,7 @@ endef
 define test2 =
 $(1)-test: $(2).gen.h $(2).o $(1).gen.h $(1).o $(1)-test.o $(DEPS);
 	$(CC) $(CFLAGS) -lm $(1).o $(1)-test.o $(2).o
-	./a.out
+	./a.out || exit 1
 	rm a.out
 endef
 

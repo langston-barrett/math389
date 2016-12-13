@@ -2,14 +2,11 @@
 
 include ../../library.mk
 
-.PHONY: all build test clean
-all: build test clean
-
 %.gen.h: %.c ../../makeheaders.sh $(DEPS)
 	bash ../../makeheaders.sh $<;
 
-build: cache-penalty.gen.h random-array.gen.h cache-size.gen.h csv.gen.h cache-size.o csv.o random-array.o main
-	$(CC) $(CFLAGS) -g -o cache -lm cache-size.o csv.o random-array.o main.o
+build: random-array.gen.h cache-size.gen.h csv.gen.h cache-size.o csv.o random-array.o main
+	$(CC) $(CFLAGS) -o cache -lm cache-size.o csv.o random-array.o main.o
 
 analysis: build
 	[[ -f cache-size-data.csv ]] || ./cache

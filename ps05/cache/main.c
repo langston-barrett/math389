@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "./cache-size.gen.h"
 #include "./csv.gen.h"
-#include "./cache-penalty.gen.h"
 
 
 const int64_t l1_guess = 512000; // 64kb in bits

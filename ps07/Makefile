@@ -1,12 +1,13 @@
 include ../library.mk
 
-export CFLAGS := -g -pthread -Werror -Weverything -std=gnu11 -Qunused-arguments
+# Extra CFLAGS. Appending doesn't work??
+FLG := -g -pthread
 KLEE_VERSION := 1.2.0
 KLEE_MAX_MEM := 2048
 
 ############################ Setup ############################ 
 %.o: %.c $(DEPS)
-	$(CC) $(CFLAGS) -c $<;
+	$(CC) $(CFLAGS) $(FLG) -c $<;
 
 %.gen.h: %.c ../makeheaders.sh $(DEPS)
 	bash ../makeheaders.sh $<;
@@ -15,31 +16,39 @@ KLEE_MAX_MEM := 2048
 build: sand tsand
 
 sand-lib: sand-lib.h sand-lib.o
-	$(CC) $(CFLAGS) -c sand-lib.c;
+	$(CC) $(CFLAGS) $(FLG) -c sand-lib.c;
 
 sand: sand-lib sand.h sand.o sand-main.o
-	$(CC) $(CFLAGS) -o sand -lm sand-main.o sand.o sand-lib.o
+	$(CC) $(CFLAGS) $(FLG) -o sand -lm sand-main.o sand.o sand-lib.o
 
 tsand: sand tsand.o
-	$(CC) $(CFLAGS) -DTHREADS -o tsand -lm sand-main.o sand.o tsand.o sand-lib.o
+	$(CC) $(CFLAGS) $(FLG) -DTHREADS -o tsand -lm sand-main.o sand.o tsand.o sand-lib.o
 
 ############################ Tests ############################
 # All tests will also Valgrind the test binaries.
 # http://valgrind.org/docs/manual/quick-start.html
-TMP := $(shell mktemp)
+TMP_FILE := $(shell mktemp)
+
 test: sand-lib-test sand-test
 
 define valgrind =
-	valgrind --tool=$(2) $(1) &> $(TMP) || (cat $(TMP); exit 1);
-	grep -q "ERROR SUMMARY: 0 errors" $(TMP) || (cat $(TMP); exit 1);
+	valgrind --tool=$(2) $(1) &> $(TMP_FILE) || (cat $(TMP_FILE); exit 1);
+	grep -q "ERROR SUMMARY: 0 errors" $(TMP_FILE) || (cat $(TMP_FILE); exit 1);
+	rm -rf $(TMP_FILE)
 endef
+#ifdef CI
+define valgrind =
+	echo "not running valgrind in ci build"
+	$(1) || exit 1;
+endef
+#endif
 
 sand-lib-test: sand-lib sand-lib-test.o
-	$(CC) $(CFLAGS) -o test-lib -lm sand-lib-test.o sand-lib.o;
+	$(CC) $(CFLAGS) $(FLG) -o test-lib -lm sand-lib-test.o sand-lib.o;
 	$(call valgrind,./test-lib,memcheck)
 
 sand-test: sand tsand sand-test.o
-	$(CC) $(CFLAGS) -o test -lm sand-test.o sand.o tsand.o sand-lib.o;
+	$(CC) $(CFLAGS) $(FLG) -o test -lm sand-test.o sand.o tsand.o sand-lib.o;
 	$(call valgrind,./test,memcheck)
 
 # Test for threading errors. Not very helpful right now.
@@ -48,10 +57,10 @@ sand-test-thread: sand-test
 
 ############################ Release/Analysis ############################
 csv: ../ps05/cache/csv.gen.h
-	$(CC) $(CFLAGS) -o ../ps05/cache/csv.o -c ../ps05/cache/csv.c
+	$(CC) $(CFLAGS) $(FLG) -o ../ps05/cache/csv.o -c ../ps05/cache/csv.c
 
 data-main: csv sand-lib tsand data-main.o
-	$(CC) $(CFLAGS) -o data -lm data-main.o sand.o tsand.o sand-lib.o ../ps05/cache/csv.o
+	$(CC) $(CFLAGS) $(FLG) -o data -lm data-main.o sand.o tsand.o sand-lib.o ../ps05/cache/csv.o
 
 data: data-main
 	[[ -f data.csv ]] || ./data
