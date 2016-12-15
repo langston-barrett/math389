@@ -6,11 +6,13 @@
 with import <nixpkgs> {}; stdenv.mkDerivation {
   name = "math389";
   src = null;
+  shellHook = ''
+    export CC=clang
+  '';
   buildInputs = [
-    alt-ergo # required for frama-c
+    clang
     clang-tools # for clang-format
-    framac # formal verification :O
-    gcc6
     gnumake42
+    valgrind # debugging
   ];
 }

@@ -32,7 +32,7 @@ int64_t look_up(dict *d, char *k) {
   return node->value;
 }
 
-int64_t update(dict *d, char *k, int64_t v) {
+void update(dict *d, char *k, int64_t v) {
   lnode *node = llist_lookup(get_bucket(d, k), k);
   if (node == NULL) llist_insert(get_bucket(d, k), k, v);
   else node->value = v;

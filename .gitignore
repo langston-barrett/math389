@@ -9,6 +9,12 @@
 # example files from jim
 **/examples/*
 
+# LLVM bytecode
+*.bc
+
+# clang-generated
+*.plist
+
 ########################### C
 
 # Object files

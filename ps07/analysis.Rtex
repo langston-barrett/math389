@@ -1,0 +1,100 @@
+% -*- mode: tex -*-
+% Compile with: make analysis
+
+\documentclass{article}
+\usepackage{titling}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{fontspec}
+\newfontfamily{\lstsansserif}[Scale=1]{DejaVu Sans Mono} % Monoid also good
+\lstset{basicstyle=\footnotesize\lstsansserif,breaklines=true}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\lstset{ %
+  backgroundcolor=\color{white},   % choose the background color
+  basicstyle=\footnotesize,        % size of fonts used for the code
+  breaklines=true,                 % automatic line breaking only at whitespace
+  captionpos=b,                    % sets the caption-position to bottom
+  keywordstyle=\color{blue},       % keyword style
+  stringstyle=\color{mymauve},     % string literal style
+  commentstyle=\color{mygray},     % comment style
+}
+\usepackage{minted}
+\pagestyle{fancy}
+\fancyhead[L]{\theauthor}
+\fancyhead[C]{\thetitle}
+\fancyhead[R]{\thedate}
+\renewcommand{\maketitle}{\fancypagestyle{firststyle}{
+  \fancyhead[L]{\theauthor}
+  \fancyhead[C]{\huge\thetitle}
+  \fancyhead[R]{\thedate}
+}
+\thispagestyle{firststyle}}
+% \input{/home/siddharthist/sync/tex/preamble.tex}
+\begin{document}
+\title{Math 389: Cache Analysis}
+\author{Langston, Gatlin}
+\date{\today}
+
+\maketitle
+
+%% begin.rcode echo=FALSE
+% # Just some display options for knitr, not output to tex
+% opts_chunk$set(cache=TRUE, tidy=TRUE, highlight=TRUE)
+%% end.rcode
+
+Here's the code we use to generate the data:
+\subsection*{sand-lib.c (common functionality)}
+\inputminted{c}{sand-lib.c}
+\subsection*{sand.c}
+\inputminted{c}{sand.c}
+\subsection*{tsand.c}
+\inputminted{c}{tsand.c}
+\subsection*{data-main.c}
+\inputminted{c}{data-main.c}
+
+\subsection*{analysis.R}
+And the R code that generated the graph:
+%% begin.rcode fig.width=6, fig.height=4
+% library(ggplot2)
+% library(dplyr)
+% data <- read.csv("data.csv", header=TRUE)
+% data <- data %>% filter(time != 0)
+% head(data)
+%
+% constant_height <- data %>% filter(height == 10000)
+% head(constant_height)
+% graph = ggplot(constant_height, aes(x=size, y=time, color=threaded)) + geom_point()
+% ggsave('constant-height.png', plot = graph, scale = 1, dpi = 300)
+%
+% constant_size <- data %>% filter(size == 9000)
+% graph = ggplot(constant_size, aes(x=height, y=time, color=threaded)) + geom_point()
+% ggsave('constant-size.png', plot = graph, scale = 1, dpi = 300)
+%% end.rcode
+
+And the graph itself is shown in Figure~\ref{fig:graph1}.
+ 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=1]{constant-height.png}
+  \caption{\label{fig:graph1}Comparison of threaded and unthreaded sandpile
+    simulations with initial center height held constant at TODO. The $x$-axis
+    represents the product of the number of rows and the number of columns, while
+    the $y$-axis represents time.}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=1]{constant-size.png}
+  \caption{\label{fig:graph1}Comparison of threaded and unthreaded sandpile
+    simulations with the product of the number of rows and the number of columns
+    held constant at 20000. The $x$-axis represents initial center height, and the
+    $y$-axis represents time.}
+\end{figure}
+
+As seen in \lstinline{data-main.c}, we incremented the number of rows and the
+number of columns independently from 10 to TODO.
+
+\end{document}

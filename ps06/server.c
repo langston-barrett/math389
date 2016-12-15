@@ -92,6 +92,7 @@ void *play_with_client(void *ci) {
   close(client->connection);
   free(client);
   free(ci);
+  return NULL;
 }
 
 int main(int argc, char **argv) {

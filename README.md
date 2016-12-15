@@ -4,9 +4,9 @@
 
 ### Building
 
-Building this project requires recent versions of `gcc` (≥5) and `make` (≥4). If
-you have [Nix](https://nixos.org/nix/) installed, the Makefile will detect and
-use `nix-shell`.
+Building this project requires recent versions of `clang` (≥3.7) and `make`
+(≥4).  If you have [Nix](https://nixos.org/nix/) installed, the Makefile will
+detect and use `nix-shell`.
 
 ### File Structure
 

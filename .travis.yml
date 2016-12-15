@@ -1,2 +1,2 @@
 language: nix
-script: nix-shell --command make
+script: nix-shell --run make

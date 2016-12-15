@@ -1,1 +1,12 @@
 .frama-c*
+*.png
+*.csv
+*.tex
+*tmp
+data
+sand
+test
+test-lib
+tsand
+cache/*
+
